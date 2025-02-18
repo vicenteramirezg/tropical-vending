@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Visit to {{ object.vending_machine.name }}</h1>
+<p>Date: {{ object.date_visited }}</p>
+<p>Notes: {{ object.notes }}</p>
+<a href="{% url 'visits:update' object.pk %}" class="btn btn-warning">Edit</a>
+<a href="{% url 'visits:delete' object.pk %}" class="btn btn-danger">Delete</a>
+{% endblock %}

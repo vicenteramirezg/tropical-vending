@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'machines',
     'inventory',
     'visits',
+    'home',
 ]
 
 MIDDLEWARE = [
@@ -63,7 +64,7 @@ ROOT_URLCONF = 'tropical_vending.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],  # Ensure this points to your global templates folder
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Vending Machines</h1>
+<a href="{% url 'machines:create' %}" class="btn btn-primary mb-3">Add Machine</a>
+<ul class="list-group">
+    {% for machine in machines %}
+    <li class="list-group-item">
+        <a href="{% url 'machines:detail' machine.pk %}">{{ machine.name }}</a>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

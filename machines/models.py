@@ -8,7 +8,7 @@ class Location(models.Model):
         return self.name
 
 class VendingMachine(models.Model):
-    location = models.ForeignKey(Location, on_delete=models.CASCADE)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='machines')
     name = models.CharField(max_length=100)
     last_visited = models.DateTimeField(null=True, blank=True)
 

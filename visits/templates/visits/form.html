@@ -1,9 +1,42 @@
 {% extends 'base.html' %}
+
 {% block content %}
-<h1>{% if object %}Edit{% else %}Add{% endif %} Visit</h1>
+<h1>Add Visit</h1>
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
+
+    <h3>Refill Details</h3>
+    <div id="refill-form">
+        <div class="refill-item">
+            <label for="machines">Machine:</label>
+            <select name="machines" required>
+                {% for machine in machines %}
+                <option value="{{ machine.id }}">{{ machine.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="products">Product:</label>
+            <select name="products" required>
+                {% for product in products %}
+                <option value="{{ product.id }}">{{ product.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="units_added">Units Added:</label>
+            <input type="number" name="units_added" required>
+        </div>
+    </div>
+
+    <button type="button" id="add-refill">Add Another Refill</button>
     <button type="submit" class="btn btn-primary">Save</button>
 </form>
+
+<script>
+    document.getElementById('add-refill').addEventListener('click', function() {
+        const refillForm = document.getElementById('refill-form');
+        const newRefill = refillForm.firstElementChild.cloneNode(true);
+        refillForm.appendChild(newRefill);
+    });
+</script>
 {% endblock %}

@@ -3,8 +3,8 @@ from .models import Location, VendingMachine
 
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'address')
+    list_display = ('name', 'address_1', 'address_2', 'city', 'state', 'zip_code')
 
 @admin.register(VendingMachine)
 class VendingMachineAdmin(admin.ModelAdmin):
-    list_display = ('name', 'location', 'last_visited')
+    list_display = ('name', 'location')

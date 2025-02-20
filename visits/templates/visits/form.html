@@ -10,9 +10,10 @@
     <div id="refill-form">
         <div class="refill-item">
             <label for="machines">Machine:</label>
-            <select name="machines" required>
+            <select name="machines" id="machines-dropdown" required>
+                <option value="">Select a machine</option>
                 {% for machine in machines %}
-                <option value="{{ machine.id }}">{{ machine.name }}</option>
+                <option value="{{ machine.id }}" data-location="{{ machine.location.id }}">{{ machine.name }}</option>
                 {% endfor %}
             </select>
 
@@ -23,8 +24,14 @@
                 {% endfor %}
             </select>
 
-            <label for="units_added">Units Added:</label>
-            <input type="number" name="units_added" required>
+            <label for="quantity_observed">Quantity Observed:</label>
+            <input type="number" name="quantity_observed" required>
+
+            <label for="quantity_withdrawn">Quantity Withdrawn:</label>
+            <input type="number" name="quantity_withdrawn" required>
+
+            <label for="quantity_added">Quantity Added:</label>
+            <input type="number" name="quantity_added" required>
         </div>
     </div>
 
@@ -37,6 +44,19 @@
         const refillForm = document.getElementById('refill-form');
         const newRefill = refillForm.firstElementChild.cloneNode(true);
         refillForm.appendChild(newRefill);
+    });
+
+    // Filtering Machines based on selected Location
+    document.getElementById("id_location").addEventListener("change", function() {
+        const selectedLocation = this.value;
+        const machineDropdown = document.getElementById("machines-dropdown");
+
+        Array.from(machineDropdown.options).forEach(option => {
+            if (option.value === "") return;  // Keep the "Select a machine" option
+            option.style.display = option.getAttribute("data-location") === selectedLocation ? "block" : "none";
+        });
+
+        machineDropdown.value = "";  // Reset selection when location changes
     });
 </script>
 {% endblock %}

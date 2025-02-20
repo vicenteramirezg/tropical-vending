@@ -13,14 +13,14 @@ class LocationListView(LoginRequiredMixin, ListView):
 class LocationCreateView(LoginRequiredMixin, CreateView):
     model = Location
     template_name = 'machines/location_form.html'
-    fields = ['name', 'address']
+    fields = ['name', 'address_1', 'address_2', 'city', 'state', 'zip_code']
     success_url = reverse_lazy('machines:location_list')
     login_url = '/login/'
 
 class LocationUpdateView(LoginRequiredMixin, UpdateView):
     model = Location
     template_name = 'machines/location_form.html'
-    fields = ['name', 'address']
+    fields = ['name', 'address_1', 'address_2', 'city', 'state', 'zip_code']
     success_url = reverse_lazy('machines:location_list')
     login_url = '/login/'
 

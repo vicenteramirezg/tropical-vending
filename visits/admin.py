@@ -12,4 +12,4 @@ class VisitAdmin(admin.ModelAdmin):
 
 @admin.register(MachineRefill)
 class MachineRefillAdmin(admin.ModelAdmin):
-    list_display = ('visit', 'vending_machine', 'product', 'units_added')
+    list_display = ('visit', 'vending_machine', 'product', 'quantity_observed', 'quantity_withdrawn', 'quantity_added')

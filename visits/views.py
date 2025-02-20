@@ -25,6 +25,7 @@ class VisitCreateView(LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['locations'] = Location.objects.all()
         context['machines'] = VendingMachine.objects.all()
         context['products'] = Product.objects.all()
         return context
@@ -33,16 +34,20 @@ class VisitCreateView(LoginRequiredMixin, CreateView):
         visit = form.save()
         machines = self.request.POST.getlist('machines')
         products = self.request.POST.getlist('products')
-        units_added = self.request.POST.getlist('units_added')
+        observed = self.request.POST.getlist('quantity_observed')
+        withdrawn = self.request.POST.getlist('quantity_withdrawn')
+        added = self.request.POST.getlist('quantity_added')
 
-        for machine_id, product_id, units in zip(machines, products, units_added):
+        for machine_id, product_id, obs, withdr, add in zip(machines, products, observed, withdrawn, added):
             machine = VendingMachine.objects.get(id=machine_id)
             product = Product.objects.get(id=product_id)
             MachineRefill.objects.create(
                 visit=visit,
                 vending_machine=machine,
                 product=product,
-                units_added=units
+                quantity_observed=obs,
+                quantity_withdrawn=withdr,
+                quantity_added=add
             )
 
         return super().form_valid(form)

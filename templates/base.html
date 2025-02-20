@@ -63,23 +63,35 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'machines:location_list' %}">Locations</a>
-                    </li>
-                    <li class="nav-item">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'machines:list' %}">Machines</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'inventory:list' %}">Inventory</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'visits:list' %}">Visits</a>
-                    </li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'machines:location_list' %}">Locations</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'machines:list' %}">Machines</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'inventory:list' %}">Inventory</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'visits:list' %}">Visits</a>
+                        </li>
+                        <li class="nav-item">
+                            <form method="post" action="{% url 'logout' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">Sign Out</button>
+                            </form>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link btn btn-primary text-white px-3" href="{% url 'login' %}">Sign In</a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
+
 
     <!-- Main Content -->
     <main>

@@ -32,6 +32,11 @@ DEBUG = os.getenv('DEBUG') == 'True'
 
 ALLOWED_HOSTS = []
 
+# Redirect to the homepage after login
+LOGIN_REDIRECT_URL = 'home'
+
+# Redirect to the login page if a user is not authenticated
+LOGIN_URL = 'login'
 
 # Application definition
 

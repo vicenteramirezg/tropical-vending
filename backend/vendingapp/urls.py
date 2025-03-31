@@ -13,24 +13,85 @@ from django.contrib.auth import authenticate, get_user_model
 from django.db import connection
 import logging
 import json
+from django.core.management import call_command
+from io import StringIO
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+# Database table check function
+def check_database_tables(connection):
+    db_tables = {}
+    try:
+        with connection.cursor() as cursor:
+            # Check database type
+            db_engine = connection.vendor
+            db_tables['database_type'] = db_engine
+            
+            if db_engine == 'sqlite':
+                # SQLite specific query
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                tables = cursor.fetchall()
+                db_tables['tables'] = [table[0] for table in tables]
+                
+                # Check for auth_user specifically
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='auth_user';")
+                auth_user_exists = cursor.fetchone() is not None
+            elif db_engine == 'postgresql':
+                # PostgreSQL specific query
+                cursor.execute("""
+                    SELECT table_name 
+                    FROM information_schema.tables 
+                    WHERE table_schema = 'public'
+                    ORDER BY table_name;
+                """)
+                tables = cursor.fetchall()
+                db_tables['tables'] = [table[0] for table in tables]
+                
+                # Check for auth_user specifically
+                cursor.execute("""
+                    SELECT table_name 
+                    FROM information_schema.tables 
+                    WHERE table_schema = 'public' AND table_name = 'auth_user';
+                """)
+                auth_user_exists = cursor.fetchone() is not None
+            else:
+                # Other databases - generic approach
+                cursor.execute("SELECT 1 FROM auth_user LIMIT 1;")
+                auth_user_exists = True
+    except Exception as e:
+        if 'no such table: auth_user' in str(e):
+            auth_user_exists = False
+        else:
+            logger.error(f"DB table check error: {str(e)}")
+            db_tables['error'] = str(e)
+            return db_tables
+    
+    db_tables['auth_user_exists'] = auth_user_exists
+    return db_tables
 
 # Simple debug view to test API connectivity
 def debug_view(request):
     logger.info(f"Debug view accessed with method: {request.method}")
     logger.info(f"Headers: {dict(request.headers)}")
     
+    # Database table check
+    db_tables = check_database_tables(connection)
+    
     # Print SQL queries for debugging
     with connection.execute_wrapper(lambda execute, sql, params, many, context: logger.info(f"SQL: {sql}")):
         # Check if specific username exists
         username = 'vicente'
-        user_exists = User.objects.filter(username=username).exists()
-        user_count = User.objects.count()
+        user_exists = False
+        user_count = 0
+        all_users = []
         
-        # Get list of all usernames for debugging
-        all_users = list(User.objects.values_list('username', flat=True))
+        try:
+            user_exists = User.objects.filter(username=username).exists()
+            user_count = User.objects.count()
+            all_users = list(User.objects.values_list('username', flat=True))
+        except Exception as e:
+            logger.error(f"User check error: {str(e)}")
         
         # Test authentication
         auth_result = None
@@ -61,6 +122,7 @@ def debug_view(request):
         'path': request.path,
         'is_secure': request.is_secure(),
         'host': request.get_host(),
+        'database': db_tables,
         'user_debug': {
             'user_exists': user_exists,
             'user_count': user_count,
@@ -125,6 +187,63 @@ def direct_auth_view(request):
         logger.error(f"Direct auth error: {str(e)}")
         return JsonResponse({"error": str(e)}, status=400)
 
+# Migration view
+def migrate_view(request):
+    """Run migrations from the web."""
+    if request.META.get('REMOTE_ADDR') not in ['127.0.0.1', 'localhost']:
+        # Add extra security check - only run if a secret is provided
+        if request.GET.get('secret') != settings.SECRET_KEY[:8]:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Unauthorized'
+            }, status=403)
+    
+    output = StringIO()
+    try:
+        # Run makemigrations first to ensure migration files exist
+        call_command('makemigrations', stdout=output)
+        output.write("\n\n--- Running migrate ---\n\n")
+        # Run migrate to apply migrations
+        call_command('migrate', stdout=output)
+        
+        # Check database status after migrations
+        db_tables = check_database_tables(connection)
+        
+        # Create a superuser if no users exist
+        user_count = 0
+        superuser_created = False
+        
+        try:
+            user_count = User.objects.count()
+            if user_count == 0:
+                # Create a default superuser
+                output.write("\n\n--- Creating default superuser ---\n\n")
+                User.objects.create_superuser(
+                    username='vicente', 
+                    email='admin@example.com',
+                    password='186422775'
+                )
+                output.write("Superuser 'vicente' created successfully.\n")
+                superuser_created = True
+        except Exception as e:
+            output.write(f"\nError checking/creating users: {str(e)}\n")
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Migrations applied',
+            'output': output.getvalue(),
+            'database': db_tables,
+            'user_count': user_count,
+            'superuser_created': superuser_created
+        })
+    except Exception as e:
+        logger.error(f"Migration error: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e),
+            'output': output.getvalue()
+        }, status=500)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/token/', csrf_exempt(TokenObtainPairView.as_view()), name='token_obtain_pair'),
@@ -133,6 +252,7 @@ urlpatterns = [
     # Debug endpoints
     path('api/debug/', csrf_exempt(debug_view), name='debug_api'),
     path('api/direct-auth/', csrf_exempt(direct_auth_view), name='direct_auth'),
+    path('api/run-migrations/', migrate_view, name='run_migrations'),
     path('debug/', TemplateView.as_view(template_name='debug.html')),
     # Serve Vue App
     path('', TemplateView.as_view(template_name='index.html')),

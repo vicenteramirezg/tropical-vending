@@ -1,1 +1,1 @@
-web: cd backend && gunicorn vendingapp.wsgi --workers 1
+web: cd backend && gunicorn vendingapp.wsgi --bind 0.0.0.0:$PORT --workers 1

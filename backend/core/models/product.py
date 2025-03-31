@@ -2,8 +2,14 @@ from django.db import models
 
 
 class Product(models.Model):
+    PRODUCT_TYPES = (
+        ('Soda', 'Soda'),
+        ('Snack', 'Snack'),
+    )
+    
     name = models.CharField(max_length=100)
-    unit_type = models.CharField(max_length=50)  # e.g., "can", "bottle", "pack"
+    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPES, default='Soda')
+    unit_type = models.CharField(max_length=50, default='unit', blank=True)  # Made optional with default
     image_url = models.URLField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

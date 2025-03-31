@@ -135,6 +135,19 @@
                       >
                     </div>
                     <div>
+                      <label for="product_type" class="block text-sm font-medium text-gray-700">Product Type</label>
+                      <select 
+                        id="product_type" 
+                        name="product_type" 
+                        v-model="productForm.product_type"
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                        required
+                      >
+                        <option value="Soda">Soda</option>
+                        <option value="Snack">Snack</option>
+                      </select>
+                    </div>
+                    <div>
                       <label for="cost_price" class="block text-sm font-medium text-gray-700">Cost Price ($)</label>
                       <input 
                         type="number" 
@@ -263,6 +276,7 @@ const productToDelete = ref(null)
 const productForm = ref({
   id: null,
   name: '',
+  product_type: 'Soda',
   description: '',
   cost_price: 0,
   image_url: ''
@@ -297,6 +311,7 @@ const openAddModal = () => {
   productForm.value = {
     id: null,
     name: '',
+    product_type: 'Soda',
     description: '',
     cost_price: 0,
     image_url: ''
@@ -310,6 +325,7 @@ const editProduct = (product) => {
   productForm.value = {
     id: product.id,
     name: product.name,
+    product_type: product.product_type || 'Soda',
     description: product.description || '',
     cost_price: product.cost_price,
     image_url: product.image_url || ''

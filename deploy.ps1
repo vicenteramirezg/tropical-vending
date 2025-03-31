@@ -22,6 +22,23 @@ if ($LASTEXITCODE -ne 0) {
 }
 Pop-Location
 
+# Copy and modify the Vite-generated index.html file to use Django template tags
+Write-Host "Preparing Django template for frontend..." -ForegroundColor Cyan
+$indexContent = Get-Content -Path "backend/static/index.html" -Raw
+$indexContent = $indexContent -replace 'src="/assets/', 'src="{% static ''assets/'
+$indexContent = $indexContent -replace 'href="/assets/', 'href="{% static ''assets/'
+$indexContent = $indexContent -replace '.js"', '.js'' %}"'
+$indexContent = $indexContent -replace '.css"', '.css'' %}"'
+$indexContent = "{% load static %}`n" + $indexContent
+
+# Ensure templates directory exists
+if (!(Test-Path "backend/templates")) {
+    New-Item -Path "backend/templates" -ItemType Directory
+}
+
+# Write the modified content to the Django template
+$indexContent | Out-File -FilePath "backend/templates/index.html" -Encoding utf8
+
 # Navigate to backend directory and collect static files
 Write-Host "Collecting static files..." -ForegroundColor Cyan
 Push-Location -Path "backend"

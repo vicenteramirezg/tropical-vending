@@ -17,7 +17,12 @@ if os.path.isfile(env_file):
 # Security settings
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-key-change-in-production")
 DEBUG = env.bool("DEBUG", default=False)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "tropical-vending-production.up.railway.app"])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
+    "localhost", 
+    "127.0.0.1", 
+    "tropical-vending-production.up.railway.app",
+    ".up.railway.app"
+])
 
 # Application definition
 INSTALLED_APPS = [
@@ -142,23 +147,19 @@ SIMPLE_JWT = {
 }
 
 # CORS settings
-CORS_ALLOWED_ORIGINS = [
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[
     "http://localhost:8000",
     "http://localhost:5173",
-    "http://localhost:5174",
+    "http://localhost:5174", 
     "http://localhost:5175",
     "https://tropical-vending-production.up.railway.app",
-]
+])
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-]
+
+# Add this to allow Railway's domain pattern
+if not DEBUG:
+    CORS_ORIGIN_ALLOW_ALL = True
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
@@ -170,14 +171,17 @@ CSRF_TRUSTED_ORIGINS = [
 # Session and cookie settings
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False  # Set to False to allow JavaScript access for SPA
 SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 # Secure SSL settings
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = not DEBUG
+# Disable SSL redirect for now as it might be causing issues with Railway
+SECURE_SSL_REDIRECT = False
 # Set to True only in production
 if not DEBUG:
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_SECONDS = 3600  # Start with a smaller value (1 hour)
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True 

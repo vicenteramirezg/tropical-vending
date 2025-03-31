@@ -1,7 +1,0 @@
-{% extends 'base.html' %}
-{% block content %}
-<h1>{{ object.name }}</h1>
-<p>Barcode: {{ object.barcode }}</p>
-<a href="{% url 'inventory:update' object.pk %}" class="btn btn-warning">Edit</a>
-<a href="{% url 'inventory:delete' object.pk %}" class="btn btn-danger">Delete</a>
-{% endblock %}

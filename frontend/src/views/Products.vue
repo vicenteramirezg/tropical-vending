@@ -62,7 +62,7 @@
                   :src="product.image_url" 
                   :alt="product.name" 
                   class="h-full w-full object-cover"
-                  @error="handleImageError($event)"
+                  @error="handleImageError($event, product)"
                 >
                 <div v-else class="h-full w-full flex items-center justify-center text-gray-400">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -183,7 +183,10 @@
                         placeholder="https://example.com/image.jpg"
                         class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       >
-                      <div v-if="productForm.image_url" class="mt-3 h-32 w-32 rounded-lg overflow-hidden bg-gray-100 shadow-sm">
+                    </div>
+                    <div v-if="productForm.image_url" class="mt-3">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">Image Preview:</h4>
+                      <div class="h-32 w-32 rounded-lg overflow-hidden bg-gray-100 shadow-sm">
                         <img :src="productForm.image_url" class="h-full w-full object-cover" @error="handleImageError($event)">
                       </div>
                     </div>
@@ -286,9 +289,15 @@ const productForm = ref({
 })
 
 // Handle image loading error
-const handleImageError = (event) => {
+const handleImageError = (event, product) => {
   console.error('Image load error:', event.target.src)
-  event.target.src = '/placeholder-image.png' // Replace with your placeholder image path
+  // If image fails to load, set a default placeholder 
+  event.target.src = 'https://via.placeholder.com/150?text=No+Image'
+  
+  // Log the error for debugging
+  if (product) {
+    console.warn(`Failed to load image for product: ${product.name}`, product.image_url)
+  }
 }
 
 // Fetch all products
@@ -297,6 +306,14 @@ const fetchProducts = async () => {
   try {
     const response = await api.getProducts()
     products.value = response.data
+    
+    // Log product data for debugging
+    console.log('Products loaded:', products.value.length)
+    products.value.forEach(product => {
+      if (!product.image_url) {
+        console.warn('Product missing image URL:', product.name)
+      }
+    })
   } catch (err) {
     console.error('Error fetching products:', err)
     error.value = 'Failed to load products. Please try again later.'

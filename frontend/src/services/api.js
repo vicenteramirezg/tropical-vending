@@ -1,14 +1,19 @@
 import axios from 'axios'
 import { useAuthStore } from '../store/auth'
 
+// Determine the API URL based on the current host
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
 // Get the API URL from environment variables or use fallbacks
-const API_URL = import.meta.env.VITE_API_URL || '/api'
-const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || '/media'
+let API_URL = isLocalhost ? 'http://localhost:8000/api' : '/api';
+let MEDIA_URL = isLocalhost ? 'http://localhost:8000/media' : '/media';
 
 // Debug logging
-console.log('API Service - API_URL:', API_URL)
-console.log('API Service - MEDIA_URL:', MEDIA_URL)
-console.log('API Service - Environment:', import.meta.env.MODE)
+console.log('API Service - Current hostname:', window.location.hostname);
+console.log('API Service - isLocalhost:', isLocalhost);
+console.log('API Service - API_URL:', API_URL);
+console.log('API Service - MEDIA_URL:', MEDIA_URL);
+console.log('API Service - Environment:', import.meta.env.MODE);
 
 // Create an axios instance for API calls
 const apiClient = axios.create({
@@ -25,9 +30,11 @@ apiClient.interceptors.request.use(
     if (authStore.token) {
       config.headers['Authorization'] = `Bearer ${authStore.token}`
     }
+    console.log('API Request:', config.method, config.url);
     return config
   },
   (error) => {
+    console.error('API Request Error:', error);
     return Promise.reject(error)
   }
 )
@@ -35,14 +42,17 @@ apiClient.interceptors.request.use(
 // Response interceptor for API calls
 apiClient.interceptors.response.use(
   (response) => {
+    console.log('API Response:', response.status, response.config.url);
     return response
   },
   async (error) => {
+    console.error('API Response Error:', error?.response?.status, error?.config?.url, error.message);
+    
     const originalRequest = error.config
     const authStore = useAuthStore()
     
     // If the error is 401 and we haven't retried yet
-    if (error.response.status === 401 && !originalRequest._retry && authStore.refreshToken) {
+    if (error.response?.status === 401 && !originalRequest._retry && authStore.refreshToken) {
       originalRequest._retry = true
       
       try {

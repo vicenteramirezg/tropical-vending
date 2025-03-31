@@ -1,9 +1,13 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 
-// Get the API URL from environment variables
-const API_URL = import.meta.env.VITE_API_URL || '/api'
-console.log('Auth Store API_URL:', API_URL) // Debug log
+// Determine the API URL based on the current host
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_URL = isLocalhost ? 'http://localhost:8000/api' : '/api';
+
+console.log('Auth Store - Current hostname:', window.location.hostname);
+console.log('Auth Store - isLocalhost:', isLocalhost);
+console.log('Auth Store - API_URL:', API_URL); // Debug log
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -18,11 +22,15 @@ export const useAuthStore = defineStore('auth', {
   
   actions: {
     async login(username, password) {
+      console.log(`Attempting login for user: ${username} with API URL: ${API_URL}`);
+      
       try {
         const response = await axios.post(`${API_URL}/token/`, {
           username,
           password
-        })
+        });
+        
+        console.log('Login response:', response.status);
         
         this.token = response.data.access
         this.refreshToken = response.data.refresh
@@ -35,6 +43,11 @@ export const useAuthStore = defineStore('auth', {
         
         return { success: true }
       } catch (error) {
+        console.error('Login error:', error.message);
+        if (error.response) {
+          console.error('Login error status:', error.response.status);
+          console.error('Login error data:', error.response.data);
+        }
         return {
           success: false,
           message: error.response?.data?.detail || 'Login failed'

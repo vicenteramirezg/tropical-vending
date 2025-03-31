@@ -16,7 +16,8 @@ if os.path.isfile(env_file):
 
 # Security settings
 SECRET_KEY = env("SECRET_KEY", default="tropical-vending-2025")
-DEBUG = env.bool("DEBUG", default=False)
+# Temporarily set DEBUG to True for troubleshooting
+DEBUG = True  # Will show detailed error pages
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
     "localhost", 
     "127.0.0.1", 
@@ -203,4 +204,44 @@ SECURE_SSL_REDIRECT = False
 if not DEBUG:
     SECURE_HSTS_SECONDS = 3600  # Start with a smaller value (1 hour)
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True 
+    SECURE_HSTS_PRELOAD = True
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+} 

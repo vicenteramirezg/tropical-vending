@@ -67,14 +67,14 @@ const router = createRouter({
           name: 'login',
           component: () => import('../views/auth/Login.vue'),
           meta: { title: 'Login' }
-        },
-        {
-          path: '/register',
-          name: 'register',
-          component: () => import('../views/auth/Register.vue'),
-          meta: { title: 'Register' }
         }
       ]
+    },
+    {
+      path: '/home',
+      name: 'home',
+      component: () => import('../views/Home.vue'),
+      meta: { title: 'Home' }
     },
     {
       // Catch-all route for 404

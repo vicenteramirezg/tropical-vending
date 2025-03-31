@@ -1,23 +1,76 @@
 <template>
   <div>
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-semibold text-gray-900">Machines</h1>
+      <h1 class="text-2xl font-bold text-gray-900">Machines</h1>
       <button 
         @click="openAddModal" 
-        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
       >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
         Add Machine
       </button>
     </div>
     
-    <div v-if="loading" class="flex justify-center">
+    <!-- Filter Options -->
+    <div class="bg-white p-5 shadow-lg rounded-xl mb-6">
+      <div class="flex flex-wrap items-center gap-4">
+        <div>
+          <label for="locationFilter" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+          <select
+            id="locationFilter"
+            v-model="filters.location"
+            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            @change="applyFilters"
+          >
+            <option value="">All Locations</option>
+            <option v-for="location in locations" :key="location.id" :value="location.id">
+              {{ location.name }}
+            </option>
+          </select>
+        </div>
+        
+        <div>
+          <label for="typeFilter" class="block text-sm font-medium text-gray-700 mb-1">Machine Type</label>
+          <select
+            id="typeFilter"
+            v-model="filters.machineType"
+            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            @change="applyFilters"
+          >
+            <option value="">All Types</option>
+            <option value="Snack">Snack</option>
+            <option value="Soda">Soda</option>
+            <option value="Combo">Combo</option>
+          </select>
+        </div>
+        
+        <div class="self-end ml-auto mt-4">
+          <button
+            type="button"
+            @click="applyFilters"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            Apply Filters
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div v-if="loading" class="flex justify-center py-20">
       <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
     </div>
     
-    <div v-else-if="error" class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+    <div v-else-if="error" class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-r-lg shadow-sm">
       <div class="flex">
         <div class="flex-shrink-0">
-          <span class="text-red-400">⚠</span>
+          <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
         </div>
         <div class="ml-3">
           <p class="text-sm text-red-700">{{ error }}</p>
@@ -25,52 +78,90 @@
       </div>
     </div>
     
-    <div v-else-if="machines.length === 0" class="bg-white shadow overflow-hidden sm:rounded-lg">
-      <div class="px-4 py-5 sm:p-6 text-center">
-        <h3 class="text-lg leading-6 font-medium text-gray-900">No machines found</h3>
-        <div class="mt-2 max-w-xl text-sm text-gray-500">
+    <div v-else-if="Object.keys(groupedMachines).length === 0" class="bg-white shadow-lg rounded-xl overflow-hidden">
+      <div class="px-6 py-8 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+        </svg>
+        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-2">No machines found</h3>
+        <div class="mt-2 max-w-xl text-sm text-gray-500 mx-auto mb-6">
           <p>Get started by adding your first machine.</p>
         </div>
-        <div class="mt-5">
-          <button
-            @click="openAddModal"
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-          >
-            Add Machine
-          </button>
-        </div>
+        <button
+          @click="openAddModal"
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Add Machine
+        </button>
       </div>
     </div>
     
-    <div v-else class="bg-white shadow overflow-hidden sm:rounded-lg">
-      <ul role="list" class="divide-y divide-gray-200">
-        <li v-for="machine in machines" :key="machine.id" class="px-4 py-4 sm:px-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="flex items-center">
-                <p class="text-sm font-medium text-primary-600 truncate">{{ machine.name }}</p>
-                <p class="ml-2 text-sm text-gray-500">{{ machine.machine_type }}</p>
-              </div>
-              <p class="text-sm text-gray-500">Location: {{ machine.location_name }}</p>
-              <p v-if="machine.model" class="text-sm text-gray-500">Model: {{ machine.model }}</p>
-            </div>
-            <div class="flex space-x-2">
-              <button
-                @click="editMachine(machine)"
-                class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-              >
-                Edit
-              </button>
-              <button
-                @click="confirmDelete(machine)"
-                class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-              >
-                Delete
-              </button>
-            </div>
+    <div v-else class="space-y-6">
+      <!-- Group machines by location -->
+      <div v-for="(machines, locationId) in groupedMachines" :key="locationId" class="bg-white shadow-lg rounded-xl overflow-hidden">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-medium text-gray-900">{{ locationNames[locationId] }}</h2>
+            <p class="text-sm text-gray-500">{{ machines.length }} machines</p>
           </div>
-        </li>
-      </ul>
+          <button 
+            @click="openMapForLocation(locationInfo[locationId])" 
+            class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            View on Maps
+          </button>
+        </div>
+        
+        <ul role="list" class="divide-y divide-gray-200">
+          <li v-for="machine in machines" :key="machine.id" class="px-6 py-5 hover:bg-gray-50 transition-colors duration-150">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="flex items-center">
+                  <p class="text-sm font-medium text-primary-600">{{ machine.name }}</p>
+                  <span 
+                    class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    :class="{
+                      'bg-blue-100 text-blue-800': machine.machine_type === 'Soda',
+                      'bg-green-100 text-green-800': machine.machine_type === 'Snack',
+                      'bg-purple-100 text-purple-800': machine.machine_type === 'Combo'
+                    }"
+                  >
+                    {{ machine.machine_type }}
+                  </span>
+                </div>
+                <p v-if="machine.model" class="text-sm text-gray-500 mt-1">Model: {{ machine.model }}</p>
+              </div>
+              <div class="flex space-x-2">
+                <button
+                  @click="editMachine(machine)"
+                  class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Edit
+                </button>
+                <button
+                  @click="confirmDelete(machine)"
+                  class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-red-50 hover:text-red-700 hover:border-red-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
     </div>
     
     <!-- Add/Edit Modal -->
@@ -220,13 +311,35 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { api } from '../services/api'
 
 const machines = ref([])
 const locations = ref([])
 const loading = ref(true)
 const error = ref(null)
+const locationInfo = ref({})
+const locationNames = ref({})
+
+// Filter state
+const filters = ref({
+  location: '',
+  machineType: ''
+})
+
+// Group machines by location
+const groupedMachines = computed(() => {
+  const grouped = {}
+  
+  machines.value.forEach(machine => {
+    if (!grouped[machine.location]) {
+      grouped[machine.location] = []
+    }
+    grouped[machine.location].push(machine)
+  })
+  
+  return grouped
+})
 
 // Machine models list
 const machineModels = ref([
@@ -301,11 +414,16 @@ const machineForm = ref({
   model: ''
 })
 
-// Fetch all machines
+// Fetch all machines with filters
 const fetchMachines = async () => {
   loading.value = true
   try {
-    const response = await api.getMachines()
+    const params = {
+      location: filters.value.location || undefined,
+      machine_type: filters.value.machineType || undefined
+    }
+    
+    const response = await api.getMachines(params)
     machines.value = response.data
   } catch (err) {
     console.error('Error fetching machines:', err)
@@ -315,15 +433,37 @@ const fetchMachines = async () => {
   }
 }
 
-// Fetch all locations for the dropdown
+// Fetch all locations for the dropdown and mapping
 const fetchLocations = async () => {
   try {
     const response = await api.getLocations()
     locations.value = response.data
+    
+    // Create lookup objects for location names and info
+    response.data.forEach(location => {
+      locationNames.value[location.id] = location.name
+      locationInfo.value[location.id] = location
+    })
   } catch (err) {
     console.error('Error fetching locations:', err)
-    // We don't need to set error state here as it's a secondary operation
   }
+}
+
+// Apply filters
+const applyFilters = () => {
+  fetchMachines()
+}
+
+// Open Google Maps for location
+const openMapForLocation = (location) => {
+  if (!location || !location.address) return
+  
+  // Format the address for Google Maps URL
+  const formattedAddress = encodeURIComponent(location.address)
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${formattedAddress}`
+  
+  // Open in a new window/tab
+  window.open(mapsUrl, '_blank')
 }
 
 // Open modal to add a new machine
@@ -391,6 +531,6 @@ const deleteMachine = async () => {
 
 // Initialize data on component mount
 onMounted(async () => {
-  await Promise.all([fetchMachines(), fetchLocations()])
+  await Promise.all([fetchLocations(), fetchMachines()])
 })
 </script> 

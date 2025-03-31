@@ -114,6 +114,14 @@
         </div>
       </div>
     </main>
+
+    <footer class="bg-white py-4 border-t border-gray-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p class="text-center text-gray-500 text-sm">
+          Made with <span class="text-yellow-500">💛</span> by <a href="https://garat.dev" target="_blank" class="text-primary-600 hover:text-primary-700">Garat.dev</a>
+        </p>
+      </div>
+    </footer>
   </div>
 </template>
 

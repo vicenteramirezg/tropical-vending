@@ -2,14 +2,16 @@
   <div>
     <h1 class="text-2xl font-semibold text-gray-900 mb-6">Analytics</h1>
     
-    <div v-if="loading" class="flex justify-center">
+    <div v-if="loading" class="flex justify-center py-20">
       <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
     </div>
     
-    <div v-else-if="error" class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+    <div v-else-if="error" class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-r-lg shadow-sm">
       <div class="flex">
         <div class="flex-shrink-0">
-          <span class="text-red-400">⚠</span>
+          <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
         </div>
         <div class="ml-3">
           <p class="text-sm text-red-700">{{ error }}</p>
@@ -19,7 +21,7 @@
     
     <div v-else>
       <!-- Filter Controls -->
-      <div class="bg-white p-4 shadow rounded-lg mb-6">
+      <div class="bg-white p-5 shadow-lg rounded-xl mb-6">
         <div class="flex flex-wrap items-center gap-4">
           <div>
             <label for="dateRange" class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
@@ -77,8 +79,11 @@
             <button
               type="button"
               @click="applyFilters"
-              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
             >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
               Apply Filters
             </button>
           </div>
@@ -86,46 +91,73 @@
       </div>
       
       <!-- Revenue & Profit Section -->
-      <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
-        <div class="px-4 py-5 sm:px-6">
+      <div class="bg-white shadow-lg overflow-hidden sm:rounded-xl mb-6 transition-all duration-300 hover:shadow-xl">
+        <div class="px-6 py-5 border-b border-gray-100">
           <h3 class="text-lg leading-6 font-medium text-gray-900">Revenue & Profit</h3>
-          <p class="mt-1 max-w-2xl text-sm text-gray-500">
+          <p class="mt-1 text-sm text-gray-500">
             Financial performance for the selected period
           </p>
         </div>
         
-        <div class="border-t border-gray-200">
+        <div>
           <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-200">
-            <div class="px-4 py-5 sm:px-6">
+            <div class="px-6 py-5">
               <div class="text-sm font-medium text-gray-500">Total Revenue</div>
-              <div class="mt-1 text-3xl font-semibold text-gray-900">${{ revenueProfitData.revenue.total.toFixed(2) }}</div>
-              <div class="mt-1 text-sm text-gray-500">
-                <span :class="revenueProfitData.revenue.change >= 0 ? 'text-green-600' : 'text-red-600'">
+              <div class="mt-2 text-3xl font-bold text-gray-900">${{ revenueProfitData.revenue.total.toFixed(2) }}</div>
+              <div class="mt-2 text-sm text-gray-500 flex items-center">
+                <span 
+                  :class="revenueProfitData.revenue.change >= 0 ? 'text-green-600' : 'text-red-600'"
+                  class="flex items-center"
+                >
+                  <svg v-if="revenueProfitData.revenue.change >= 0" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                  </svg>
                   {{ revenueProfitData.revenue.change >= 0 ? '+' : '' }}{{ revenueProfitData.revenue.change.toFixed(1) }}%
                 </span>
-                vs previous period
+                <span class="ml-1">vs previous period</span>
               </div>
             </div>
             
-            <div class="px-4 py-5 sm:px-6">
+            <div class="px-6 py-5">
               <div class="text-sm font-medium text-gray-500">Total Profit</div>
-              <div class="mt-1 text-3xl font-semibold text-green-600">${{ revenueProfitData.profit.total.toFixed(2) }}</div>
-              <div class="mt-1 text-sm text-gray-500">
-                <span :class="revenueProfitData.profit.change >= 0 ? 'text-green-600' : 'text-red-600'">
+              <div class="mt-2 text-3xl font-bold text-green-600">${{ revenueProfitData.profit.total.toFixed(2) }}</div>
+              <div class="mt-2 text-sm text-gray-500 flex items-center">
+                <span 
+                  :class="revenueProfitData.profit.change >= 0 ? 'text-green-600' : 'text-red-600'"
+                  class="flex items-center"
+                >
+                  <svg v-if="revenueProfitData.profit.change >= 0" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                  </svg>
                   {{ revenueProfitData.profit.change >= 0 ? '+' : '' }}{{ revenueProfitData.profit.change.toFixed(1) }}%
                 </span>
-                vs previous period
+                <span class="ml-1">vs previous period</span>
               </div>
             </div>
             
-            <div class="px-4 py-5 sm:px-6">
+            <div class="px-6 py-5">
               <div class="text-sm font-medium text-gray-500">Profit Margin</div>
-              <div class="mt-1 text-3xl font-semibold text-gray-900">{{ revenueProfitData.margin.total.toFixed(1) }}%</div>
-              <div class="mt-1 text-sm text-gray-500">
-                <span :class="revenueProfitData.margin.change >= 0 ? 'text-green-600' : 'text-red-600'">
+              <div class="mt-2 text-3xl font-bold text-gray-900">{{ revenueProfitData.margin.total.toFixed(1) }}%</div>
+              <div class="mt-2 text-sm text-gray-500 flex items-center">
+                <span 
+                  :class="revenueProfitData.margin.change >= 0 ? 'text-green-600' : 'text-red-600'"
+                  class="flex items-center"
+                >
+                  <svg v-if="revenueProfitData.margin.change >= 0" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                  </svg>
                   {{ revenueProfitData.margin.change >= 0 ? '+' : '' }}{{ revenueProfitData.margin.change.toFixed(1) }}%
                 </span>
-                vs previous period
+                <span class="ml-1">vs previous period</span>
               </div>
             </div>
           </div>
@@ -133,29 +165,40 @@
       </div>
       
       <!-- Stock Levels Section -->
-      <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
-        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+      <div class="bg-white shadow-lg overflow-hidden sm:rounded-xl mb-6 transition-all duration-300 hover:shadow-xl">
+        <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
           <div>
             <h3 class="text-lg leading-6 font-medium text-gray-900">Stock Levels</h3>
-            <p class="mt-1 max-w-2xl text-sm text-gray-500">
+            <p class="mt-1 text-sm text-gray-500">
               Current inventory levels across machines
             </p>
           </div>
           <span 
-            class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium"
+            class="inline-flex items-center px-3.5 py-1 rounded-full text-sm font-medium"
             :class="stockLevelData.low_stock_count > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'"
           >
+            <svg v-if="stockLevelData.low_stock_count > 0" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             {{ stockLevelData.low_stock_count }} items low stock
           </span>
         </div>
         
-        <div class="border-t border-gray-200">
+        <div>
           <ul role="list" class="divide-y divide-gray-200">
-            <li v-for="(item, index) in stockLevelData.items" :key="index" class="px-4 py-4 sm:px-6">
+            <li v-for="(item, index) in stockLevelData.items" :key="index" class="px-6 py-4 hover:bg-gray-50 transition-colors duration-150">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-sm font-medium text-primary-600 truncate">{{ item.product_name }}</p>
-                  <p class="text-sm text-gray-500">{{ item.machine_name }} at {{ item.location_name }}</p>
+                  <p class="text-sm font-medium text-primary-600">{{ item.product_name }}</p>
+                  <p class="text-sm text-gray-500 flex items-center mt-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    {{ item.machine_name }} at {{ item.location_name }}
+                  </p>
                 </div>
                 <div>
                   <span 
@@ -172,15 +215,15 @@
       </div>
       
       <!-- Product Demand Analysis -->
-      <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div class="px-4 py-5 sm:px-6">
+      <div class="bg-white shadow-lg overflow-hidden sm:rounded-xl transition-all duration-300 hover:shadow-xl">
+        <div class="px-6 py-5 border-b border-gray-100">
           <h3 class="text-lg leading-6 font-medium text-gray-900">Product Demand Analysis</h3>
-          <p class="mt-1 max-w-2xl text-sm text-gray-500">
+          <p class="mt-1 text-sm text-gray-500">
             Sales performance by product
           </p>
         </div>
         
-        <div class="border-t border-gray-200">
+        <div>
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
@@ -203,7 +246,7 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="item in demandData.products" :key="item.product_id">
+                <tr v-for="item in demandData.products" :key="item.product_id" class="hover:bg-gray-50 transition-colors duration-150">
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm font-medium text-gray-900">{{ item.product_name }}</div>
                   </td>
@@ -221,6 +264,15 @@
                       class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                       :class="getTrendClass(item.trend)"
                     >
+                      <svg v-if="item.trend > 0" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                      <svg v-else-if="item.trend < 0" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                      </svg>
+                      <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6" />
+                      </svg>
                       {{ formatTrend(item.trend) }}
                     </span>
                   </td>

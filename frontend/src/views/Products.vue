@@ -62,7 +62,7 @@
                   :src="product.image_url" 
                   :alt="product.name" 
                   class="h-full w-full object-cover"
-                  @error="handleImageError($event, product)"
+                  @error="handleImageError($event)"
                 >
                 <div v-else class="h-full w-full flex items-center justify-center text-gray-400">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -79,6 +79,9 @@
                     </svg>
                     ${{ product.cost_price.toFixed(2) }}
                   </p>
+                  <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="product.product_type === 'Soda' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'">
+                    {{ product.product_type }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -284,11 +287,8 @@ const productForm = ref({
 
 // Handle image loading error
 const handleImageError = (event) => {
+  console.error('Image load error:', event.target.src)
   event.target.src = '/placeholder-image.png' // Replace with your placeholder image path
-}
-
-const handleImageLoadError = (event, product) => {
-  event.target.src = '/placeholder-image.png'
 }
 
 // Fetch all products
@@ -340,14 +340,17 @@ const saveProduct = async () => {
     if (isEditing.value) {
       await api.updateProduct(productForm.value.id, productForm.value)
     } else {
-      await api.createProduct(productForm.value)
+      console.log('Sending product data:', productForm.value)
+      const response = await api.createProduct(productForm.value)
+      console.log('Product created successfully:', response.data)
     }
     
     showModal.value = false
     await fetchProducts()
   } catch (err) {
     console.error('Error saving product:', err)
-    error.value = 'Failed to save product. Please try again.'
+    console.error('Error details:', err.response?.data || err.message)
+    error.value = err.response?.data?.detail || 'Failed to save product. Please try again.'
   }
 }
 

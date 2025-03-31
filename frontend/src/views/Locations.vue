@@ -67,6 +67,17 @@
                   {{ location.address }}
                 </span>
               </p>
+              <!-- Machine counts -->
+              <div v-if="locationMachines[location.id]" class="mt-2 flex flex-wrap gap-2">
+                <span 
+                  v-for="(count, type) in locationMachines[location.id]" 
+                  :key="type"
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  :class="machineTypeColors[type] || 'bg-gray-100 text-gray-800'"
+                >
+                  {{ type }}: {{ count }}
+                </span>
+              </div>
             </div>
             <div class="flex space-x-2">
               <button
@@ -216,12 +227,48 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { api } from '../services/api'
 
 const locations = ref([])
+const machines = ref([])
 const loading = ref(true)
 const error = ref(null)
+
+// Machine type colors for badges
+const machineTypeColors = {
+  'Vending': 'bg-blue-100 text-blue-800',
+  'Coffee': 'bg-amber-100 text-amber-800',
+  'Snack': 'bg-green-100 text-green-800',
+  'Drink': 'bg-purple-100 text-purple-800'
+}
+
+// Computed property to organize machines by location
+const locationMachines = computed(() => {
+  const result = {}
+  
+  // Initialize all locations with empty objects
+  locations.value.forEach(location => {
+    result[location.id] = {}
+  })
+  
+  // Count machines by type for each location
+  machines.value.forEach(machine => {
+    if (machine.location) {
+      if (!result[machine.location]) {
+        result[machine.location] = {}
+      }
+      
+      if (!result[machine.location][machine.machine_type]) {
+        result[machine.location][machine.machine_type] = 0
+      }
+      
+      result[machine.location][machine.machine_type]++
+    }
+  })
+  
+  return result
+})
 
 // Modal states
 const showModal = ref(false)
@@ -242,11 +289,24 @@ const fetchLocations = async () => {
   try {
     const response = await api.getLocations()
     locations.value = response.data
+    
+    // After locations are loaded, fetch machines
+    await fetchMachines()
   } catch (err) {
     console.error('Error fetching locations:', err)
     error.value = 'Failed to load locations. Please try again later.'
   } finally {
     loading.value = false
+  }
+}
+
+// Fetch all machines to count by location
+const fetchMachines = async () => {
+  try {
+    const response = await api.getMachines()
+    machines.value = response.data
+  } catch (err) {
+    console.error('Error fetching machines:', err)
   }
 }
 

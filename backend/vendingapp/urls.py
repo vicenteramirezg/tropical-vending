@@ -8,13 +8,14 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth import authenticate, get_user_model
 from django.db import connection
 import logging
 import json
 from django.core.management import call_command
 from io import StringIO
+import os
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -244,16 +245,117 @@ def migrate_view(request):
             'output': output.getvalue()
         }, status=500)
 
+# Direct debug view that cannot be intercepted by other views
+def direct_debug_view(request):
+    """Emergency access debug page that bypasses all routing."""
+    with open(os.path.join(settings.BASE_DIR, 'backend/templates/debug.html'), 'r') as f:
+        return HttpResponse(f.read())
+
+# Direct migration view with explicit response (not JSON)
+def direct_migrate_view(request):
+    """Run migrations directly with HTML output."""
+    # Basic security check
+    secret_key = request.GET.get('key', '')
+    if not settings.DEBUG and secret_key != settings.SECRET_KEY[:8]:
+        return HttpResponse("<h1>Unauthorized</h1><p>Provide the correct key parameter.</p>", status=403)
+    
+    output = StringIO()
+    try:
+        output.write("Running makemigrations...\n")
+        call_command('makemigrations', stdout=output)
+        
+        output.write("\n\nRunning migrate...\n")
+        call_command('migrate', stdout=output)
+        
+        # Check database status
+        output.write("\n\nChecking database status...\n")
+        try:
+            with connection.cursor() as cursor:
+                if connection.vendor == 'sqlite':
+                    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                elif connection.vendor == 'postgresql':
+                    cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';")
+                tables = cursor.fetchall()
+                output.write(f"Found {len(tables)} tables:\n")
+                for table in tables:
+                    output.write(f"- {table[0]}\n")
+        except Exception as e:
+            output.write(f"Error checking tables: {str(e)}\n")
+        
+        # Create superuser if needed
+        output.write("\n\nChecking for superuser...\n")
+        try:
+            superuser_exists = User.objects.filter(is_superuser=True).exists()
+            user_count = User.objects.count()
+            output.write(f"User count: {user_count}\n")
+            output.write(f"Superuser exists: {superuser_exists}\n")
+            
+            if not superuser_exists:
+                output.write("Creating superuser 'vicente'...\n")
+                User.objects.create_superuser(
+                    username='vicente',
+                    email='admin@example.com',
+                    password='186422775'
+                )
+                output.write("Superuser created successfully!\n")
+        except Exception as e:
+            output.write(f"Error creating superuser: {str(e)}\n")
+        
+        result = f"""
+        <html>
+        <head>
+            <title>Migration Results</title>
+            <style>
+                body {{ font-family: monospace; padding: 20px; }}
+                pre {{ background: #f4f4f4; padding: 10px; border-radius: 5px; overflow: auto; }}
+                .success {{ color: green; }}
+            </style>
+        </head>
+        <body>
+            <h1>Migration Complete</h1>
+            <p class="success">Migrations were applied successfully!</p>
+            <h2>Output:</h2>
+            <pre>{output.getvalue()}</pre>
+            <p><a href="/debug/">Go to Debug Page</a></p>
+            <p><a href="/login">Go to Login Page</a></p>
+        </body>
+        </html>
+        """
+        return HttpResponse(result)
+    except Exception as e:
+        error_result = f"""
+        <html>
+        <head>
+            <title>Migration Error</title>
+            <style>
+                body {{ font-family: monospace; padding: 20px; }}
+                pre {{ background: #f4f4f4; padding: 10px; border-radius: 5px; overflow: auto; }}
+                .error {{ color: red; }}
+            </style>
+        </head>
+        <body>
+            <h1>Migration Error</h1>
+            <p class="error">Error: {str(e)}</p>
+            <h2>Output before error:</h2>
+            <pre>{output.getvalue()}</pre>
+        </body>
+        </html>
+        """
+        return HttpResponse(error_result, status=500)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/token/', csrf_exempt(TokenObtainPairView.as_view()), name='token_obtain_pair'),
-    path('api/token/refresh/', csrf_exempt(TokenRefreshView.as_view()), name='token_refresh'),
-    path('api/', include('core.urls')),
-    # Debug endpoints
+    # Debug endpoints - placed before Vue routing to take priority
+    path('debug/', TemplateView.as_view(template_name='debug.html')),
+    path('emergency-debug/', direct_debug_view, name='emergency_debug'),
+    path('run-migrations/', direct_migrate_view, name='direct_migrations'),
     path('api/debug/', csrf_exempt(debug_view), name='debug_api'),
     path('api/direct-auth/', csrf_exempt(direct_auth_view), name='direct_auth'),
     path('api/run-migrations/', migrate_view, name='run_migrations'),
-    path('debug/', TemplateView.as_view(template_name='debug.html')),
+    # API endpoints
+    path('api/token/', csrf_exempt(TokenObtainPairView.as_view()), name='token_obtain_pair'),
+    path('api/token/refresh/', csrf_exempt(TokenRefreshView.as_view()), name='token_refresh'),
+    path('api/', include('core.urls')),
     # Serve Vue App
     path('', TemplateView.as_view(template_name='index.html')),
 ]

@@ -3,14 +3,13 @@ from django.db import models
 
 class Product(models.Model):
     name = models.CharField(max_length=100)
-    sku = models.CharField(max_length=50, unique=True)
     unit_type = models.CharField(max_length=50)  # e.g., "can", "bottle", "pack"
-    image = models.ImageField(upload_to='products/', null=True, blank=True)
+    image_url = models.URLField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.name} ({self.sku})"
+        return self.name
     
     @property
     def average_cost(self):

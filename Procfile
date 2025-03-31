@@ -1,1 +1,0 @@
-web: cd backend && python manage.py collectstatic --noinput && gunicorn vendingapp.wsgi --bind 0.0.0.0:$PORT --log-file - --log-level debug --workers 1

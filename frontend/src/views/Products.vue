@@ -58,10 +58,11 @@
             <div class="flex items-center">
               <div class="flex-shrink-0 h-14 w-14 bg-gray-100 rounded-lg overflow-hidden shadow-sm">
                 <img 
-                  v-if="product.image" 
-                  :src="getImageUrl(product.image)" 
+                  v-if="product.image_url" 
+                  :src="product.image_url" 
                   :alt="product.name" 
                   class="h-full w-full object-cover"
+                  @error="handleImageError($event, product)"
                 >
                 <div v-else class="h-full w-full flex items-center justify-center text-gray-400">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -77,12 +78,6 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     ${{ product.cost_price.toFixed(2) }}
-                  </p>
-                  <p class="text-sm text-gray-500 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                    {{ product.sku }}
                   </p>
                 </div>
               </div>
@@ -140,17 +135,6 @@
                       >
                     </div>
                     <div>
-                      <label for="sku" class="block text-sm font-medium text-gray-700">SKU</label>
-                      <input 
-                        type="text" 
-                        name="sku" 
-                        id="sku" 
-                        v-model="productForm.sku"
-                        class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                        required
-                      >
-                    </div>
-                    <div>
                       <label for="cost_price" class="block text-sm font-medium text-gray-700">Cost Price ($)</label>
                       <input 
                         type="number" 
@@ -174,33 +158,17 @@
                       ></textarea>
                     </div>
                     <div>
-                      <label class="block text-sm font-medium text-gray-700">Product Image</label>
-                      <div class="mt-1 flex items-center">
-                        <div v-if="imagePreview" class="h-32 w-32 rounded-lg overflow-hidden bg-gray-100 shadow-sm">
-                          <img :src="imagePreview" class="h-full w-full object-cover">
-                        </div>
-                        <div v-else class="h-32 w-32 rounded-lg border-2 border-dashed border-gray-300 flex justify-center items-center bg-gray-50">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <button
-                          type="button"
-                          @click="$refs.fileInput.click()"
-                          class="ml-5 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                          </svg>
-                          {{ imagePreview ? 'Change' : 'Upload' }}
-                        </button>
-                        <input 
-                          ref="fileInput" 
-                          type="file" 
-                          class="hidden" 
-                          @change="onFileChange" 
-                          accept="image/*"
-                        >
+                      <label for="image_url" class="block text-sm font-medium text-gray-700">Image URL</label>
+                      <input 
+                        type="url" 
+                        name="image_url" 
+                        id="image_url" 
+                        v-model="productForm.image_url"
+                        placeholder="https://example.com/image.jpg"
+                        class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      >
+                      <div v-if="productForm.image_url" class="mt-3 h-32 w-32 rounded-lg overflow-hidden bg-gray-100 shadow-sm">
+                        <img :src="productForm.image_url" class="h-full w-full object-cover" @error="handleImageError($event)">
                       </div>
                     </div>
                   </div>
@@ -290,20 +258,24 @@ const showModal = ref(false)
 const showDeleteModal = ref(false)
 const isEditing = ref(false)
 const productToDelete = ref(null)
-const imagePreview = ref(null)
 
 // Form for creating/editing a product
 const productForm = ref({
   id: null,
   name: '',
-  sku: '',
   description: '',
   cost_price: 0,
-  image: null
+  image_url: ''
 })
 
-// File input reference
-const fileInput = ref(null)
+// Handle image loading error
+const handleImageError = (event) => {
+  event.target.src = '/placeholder-image.png' // Replace with your placeholder image path
+}
+
+const handleImageLoadError = (event, product) => {
+  event.target.src = '/placeholder-image.png'
+}
 
 // Fetch all products
 const fetchProducts = async () => {
@@ -319,33 +291,16 @@ const fetchProducts = async () => {
   }
 }
 
-// Handle file upload
-const onFileChange = (event) => {
-  const file = event.target.files[0]
-  if (!file) return
-  
-  productForm.value.image = file
-  
-  // Create a preview
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    imagePreview.value = e.target.result
-  }
-  reader.readAsDataURL(file)
-}
-
 // Open modal to add a new product
 const openAddModal = () => {
   isEditing.value = false
   productForm.value = {
     id: null,
     name: '',
-    sku: '',
     description: '',
     cost_price: 0,
-    image: null
+    image_url: ''
   }
-  imagePreview.value = null
   showModal.value = true
 }
 
@@ -355,14 +310,10 @@ const editProduct = (product) => {
   productForm.value = {
     id: product.id,
     name: product.name,
-    sku: product.sku,
     description: product.description || '',
     cost_price: product.cost_price,
-    image: null // Don't set image when editing, only if user uploads a new one
+    image_url: product.image_url || ''
   }
-  
-  // Set preview if product has an image
-  imagePreview.value = product.image ? getImageUrl(product.image) : null
   
   showModal.value = true
 }

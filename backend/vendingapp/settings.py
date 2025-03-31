@@ -149,4 +149,20 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5175",
     "https://tropical-vending-production.up.railway.app",
 ]
-CORS_ALLOW_CREDENTIALS = True 
+CORS_ALLOW_CREDENTIALS = True
+
+# CSRF settings
+CSRF_TRUSTED_ORIGINS = [
+    "https://tropical-vending-production.up.railway.app",
+    "http://localhost:8000",
+    "http://localhost:5173",
+]
+
+# Session and cookie settings
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_HTTPONLY = True
+
+# If using HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') 

@@ -1,1 +1,1 @@
-web: gunicorn backend.vendingapp.wsgi 
+web: cd backend && gunicorn vendingapp.wsgi --workers 1

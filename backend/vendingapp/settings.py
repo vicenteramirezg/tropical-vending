@@ -15,7 +15,7 @@ if os.path.isfile(env_file):
     env.read_env(env_file)
 
 # Security settings
-SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-key-change-in-production")
+SECRET_KEY = env("SECRET_KEY", default="tropical-vending-2025")
 DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
     "localhost", 
@@ -160,6 +160,25 @@ CORS_ALLOW_ALL_ORIGINS = False
 # Add this to allow Railway's domain pattern
 if not DEBUG:
     CORS_ORIGIN_ALLOW_ALL = True
+    CORS_ALLOW_METHODS = [
+        'DELETE',
+        'GET',
+        'OPTIONS',
+        'PATCH',
+        'POST',
+        'PUT',
+    ]
+    CORS_ALLOW_HEADERS = [
+        'accept',
+        'accept-encoding',
+        'authorization',
+        'content-type',
+        'dnt',
+        'origin',
+        'user-agent',
+        'x-csrftoken',
+        'x-requested-with',
+    ]
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [

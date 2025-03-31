@@ -7,11 +7,12 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from django.views.decorators.csrf import csrf_exempt
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/', csrf_exempt(TokenObtainPairView.as_view()), name='token_obtain_pair'),
+    path('api/token/refresh/', csrf_exempt(TokenRefreshView.as_view()), name='token_refresh'),
     path('api/', include('core.urls')),
     # Debug page for troubleshooting
     path('debug/', TemplateView.as_view(template_name='debug.html')),

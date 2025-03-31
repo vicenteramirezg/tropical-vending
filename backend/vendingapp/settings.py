@@ -75,17 +75,19 @@ WSGI_APPLICATION = 'vendingapp.wsgi.application'
 
 # Database
 # Support for both SQLite (development) and PostgreSQL (production)
-if DEBUG:
+# Check if we're running on Railway by looking for DATABASE_URL
+if os.environ.get('DATABASE_URL') or env('DATABASE_URL', default=None):
+    # If DATABASE_URL is provided, use PostgreSQL
+    DATABASES = {
+        'default': env.db('DATABASE_URL')
+    }
+else:
+    # Otherwise fallback to SQLite for local development
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
-    }
-else:
-    # Use PostgreSQL in production
-    DATABASES = {
-        'default': env.db('DATABASE_URL')
     }
 
 # Password validation

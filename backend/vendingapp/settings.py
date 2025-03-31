@@ -16,8 +16,8 @@ if os.path.isfile(env_file):
 
 # Security settings
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-key-change-in-production")
-DEBUG = env.bool("DEBUG", default=True)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+DEBUG = env.bool("DEBUG", default=False)
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "tropical-vending-production.up.railway.app"])
 
 # Application definition
 INSTALLED_APPS = [
@@ -110,7 +110,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'backend/staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'backend/static'),
 ]
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'
@@ -147,5 +147,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:5175",
+    "https://tropical-vending-production.up.railway.app",
 ]
 CORS_ALLOW_CREDENTIALS = True 

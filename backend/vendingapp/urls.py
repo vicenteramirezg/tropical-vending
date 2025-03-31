@@ -13,6 +13,8 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/', include('core.urls')),
+    # Debug page for troubleshooting
+    path('debug/', TemplateView.as_view(template_name='debug.html')),
     # Serve Vue App
     path('', TemplateView.as_view(template_name='index.html')),
 ]
@@ -20,6 +22,7 @@ urlpatterns = [
 # Add media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     
 # Add this catch-all route at the end to handle Vue router paths
 urlpatterns += [

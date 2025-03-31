@@ -17,9 +17,9 @@ class MachineAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'sku', 'unit_type', 'average_cost', 'created_at')
+    list_display = ('name', 'unit_type', 'average_cost', 'created_at')
     list_filter = ('unit_type',)
-    search_fields = ('name', 'sku')
+    search_fields = ('name',)
 
 @admin.register(MachineItemPrice)
 class MachineItemPriceAdmin(admin.ModelAdmin):

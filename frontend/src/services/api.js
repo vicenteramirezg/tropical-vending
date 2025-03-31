@@ -1,8 +1,14 @@
 import axios from 'axios'
 import { useAuthStore } from '../store/auth'
 
-const API_URL = import.meta.env.VITE_API_URL
-const MEDIA_URL = import.meta.env.VITE_MEDIA_URL
+// Get the API URL from environment variables or use fallbacks
+const API_URL = import.meta.env.VITE_API_URL || '/api'
+const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || '/media'
+
+// Debug logging
+console.log('API Service - API_URL:', API_URL)
+console.log('API Service - MEDIA_URL:', MEDIA_URL)
+console.log('API Service - Environment:', import.meta.env.MODE)
 
 // Create an axios instance for API calls
 const apiClient = axios.create({

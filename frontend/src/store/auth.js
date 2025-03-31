@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL
+// Get the API URL from environment variables
+const API_URL = import.meta.env.VITE_API_URL || '/api'
+console.log('Auth Store API_URL:', API_URL) // Debug log
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({

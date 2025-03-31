@@ -19,7 +19,10 @@ export default defineConfig({
         manualChunks: undefined,
       },
     },
+    manifest: true,
+    cssCodeSplit: true,
   },
+  base: '/static/',
   server: {
     proxy: {
       '/api': {

@@ -32,11 +32,12 @@ if (!(Test-Path "backend/static/assets")) {
 # Copy and modify the Vite-generated index.html file to use Django template tags
 Write-Host "Preparing Django template for frontend..." -ForegroundColor Cyan
 $indexContent = Get-Content -Path "backend/static/index.html" -Raw
-$indexContent = $indexContent -replace 'src="/assets/', 'src="{% static ''assets/'
-$indexContent = $indexContent -replace 'href="/assets/', 'href="{% static ''assets/'
+$indexContent = $indexContent -replace 'src="/static/assets/', 'src="{% static ''assets/'
+$indexContent = $indexContent -replace 'href="/static/assets/', 'href="{% static ''assets/'
+$indexContent = $indexContent -replace 'src="/static/(.*?)"', 'src="{% static ''$1'' %}"'
+$indexContent = $indexContent -replace 'href="/static/(.*?)"', 'href="{% static ''$1'' %}"'
 $indexContent = $indexContent -replace '.js"', '.js'' %}"'
 $indexContent = $indexContent -replace '.css"', '.css'' %}"'
-$indexContent = $indexContent -replace 'href="/vite.svg"', 'href="{% static ''vite.svg'' %}"'
 $indexContent = "{% load static %}`n" + $indexContent
 
 # Ensure templates directory exists
@@ -66,9 +67,9 @@ $debugContent = @"
   <h1>Tropical Vending - Debug Page</h1>
   <div class="debug-info">
     <p>If you're seeing this page, the Django server is working but might be having trouble serving the Vue.js assets.</p>
-    <p>Static URL: {% verbatim %}{{ STATIC_URL }}{% endverbatim %}</p>
+    <p>Static URL: {{ STATIC_URL }}</p>
     <p>Available static files should be in: <code>/staticfiles/</code></p>
-    <p>Try accessing: <a href="/static/assets/index-CTXLI329.js">/static/assets/index-CTXLI329.js</a></p>
+    <p>Try accessing: <a href="/static/assets/index.js">/static/assets/index.js</a></p>
   </div>
 </body>
 </html>

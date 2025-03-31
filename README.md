@@ -163,9 +163,41 @@ In production, you'll need to set the following environment variables:
 - `DATABASE_URL`: PostgreSQL connection string
 - `ALLOWED_HOSTS`: Comma-separated list of allowed hosts
 
-### Using Railway
+### Railway Deployment
 
-This project is configured to deploy on Railway using the included Procfile.
+This project is configured to deploy on Railway. Use the following settings in your Railway project:
+
+#### Build Command
+```bash
+bash railway-build.sh
+```
+
+#### Start Command
+```bash
+bash railway-start.sh
+```
+
+Alternatively, you can use:
+
+#### Build Command
+```bash
+cd frontend && npm install && npm run build && cd .. && pip install -r requirements.txt && cd backend && python manage.py collectstatic --noinput && cd ..
+```
+
+#### Start Command
+```bash
+cd backend && gunicorn vendingapp.wsgi:application --workers 2 --timeout 120 --bind 0.0.0.0:$PORT --log-level debug
+```
+
+These commands will:
+1. Build the Vue.js frontend and output to Django's static directory
+2. Install Python dependencies
+3. Collect static files for production
+4. Start the Django server with Gunicorn
+
+### Troubleshooting Deployment
+
+If you're experiencing issues with your deployed application, visit `/debug/` route to see detailed information about static files and server configuration.
 
 ## API Documentation
 

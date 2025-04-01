@@ -291,10 +291,8 @@ const productForm = ref({
 // Handle image loading error
 const handleImageError = (event, product) => {
   console.error('Image load error:', event.target.src)
-  // If image fails to load, set a default placeholder 
-  event.target.src = 'https://via.placeholder.com/150?text=No+Image'
   
-  // Log the error for debugging
+  // Just log the error for debugging without changing the image
   if (product) {
     console.warn(`Failed to load image for product: ${product.name}`, product.image_url)
   }

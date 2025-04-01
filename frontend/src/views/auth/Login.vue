@@ -12,8 +12,8 @@
       </div>
 
       <form @submit.prevent="handleLogin" class="mt-8 space-y-6">
-        <div class="rounded-md -space-y-px">
-          <div class="mb-4">
+        <div class="space-y-4">
+          <div>
             <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
             <input
               id="username"

@@ -103,19 +103,19 @@
           <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-200">
             <div class="px-6 py-5">
               <div class="text-sm font-medium text-gray-500">Total Revenue</div>
-              <div class="mt-2 text-3xl font-bold text-gray-900">${{ revenueProfitData.revenue.total.toFixed(2) }}</div>
+              <div class="mt-2 text-3xl font-bold text-gray-900">${{ (revenueProfitData.revenue?.total || 0).toFixed(2) }}</div>
               <div class="mt-2 text-sm text-gray-500 flex items-center">
                 <span 
-                  :class="revenueProfitData.revenue.change >= 0 ? 'text-green-600' : 'text-red-600'"
+                  :class="(revenueProfitData.revenue?.change || 0) >= 0 ? 'text-green-600' : 'text-red-600'"
                   class="flex items-center"
                 >
-                  <svg v-if="revenueProfitData.revenue.change >= 0" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg v-if="(revenueProfitData.revenue?.change || 0) >= 0" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                   <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
                   </svg>
-                  {{ revenueProfitData.revenue.change >= 0 ? '+' : '' }}{{ revenueProfitData.revenue.change.toFixed(1) }}%
+                  {{ (revenueProfitData.revenue?.change || 0) >= 0 ? '+' : '' }}{{ (revenueProfitData.revenue?.change || 0).toFixed(1) }}%
                 </span>
                 <span class="ml-1">vs previous period</span>
               </div>
@@ -123,19 +123,19 @@
             
             <div class="px-6 py-5">
               <div class="text-sm font-medium text-gray-500">Total Profit</div>
-              <div class="mt-2 text-3xl font-bold text-green-600">${{ revenueProfitData.profit.total.toFixed(2) }}</div>
+              <div class="mt-2 text-3xl font-bold text-green-600">${{ (revenueProfitData.profit?.total || 0).toFixed(2) }}</div>
               <div class="mt-2 text-sm text-gray-500 flex items-center">
                 <span 
-                  :class="revenueProfitData.profit.change >= 0 ? 'text-green-600' : 'text-red-600'"
+                  :class="(revenueProfitData.profit?.change || 0) >= 0 ? 'text-green-600' : 'text-red-600'"
                   class="flex items-center"
                 >
-                  <svg v-if="revenueProfitData.profit.change >= 0" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg v-if="(revenueProfitData.profit?.change || 0) >= 0" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                   <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
                   </svg>
-                  {{ revenueProfitData.profit.change >= 0 ? '+' : '' }}{{ revenueProfitData.profit.change.toFixed(1) }}%
+                  {{ (revenueProfitData.profit?.change || 0) >= 0 ? '+' : '' }}{{ (revenueProfitData.profit?.change || 0).toFixed(1) }}%
                 </span>
                 <span class="ml-1">vs previous period</span>
               </div>
@@ -143,19 +143,19 @@
             
             <div class="px-6 py-5">
               <div class="text-sm font-medium text-gray-500">Profit Margin</div>
-              <div class="mt-2 text-3xl font-bold text-gray-900">{{ revenueProfitData.margin.total.toFixed(1) }}%</div>
+              <div class="mt-2 text-3xl font-bold text-gray-900">{{ (revenueProfitData.margin?.total || 0).toFixed(1) }}%</div>
               <div class="mt-2 text-sm text-gray-500 flex items-center">
                 <span 
-                  :class="revenueProfitData.margin.change >= 0 ? 'text-green-600' : 'text-red-600'"
+                  :class="(revenueProfitData.margin?.change || 0) >= 0 ? 'text-green-600' : 'text-red-600'"
                   class="flex items-center"
                 >
-                  <svg v-if="revenueProfitData.margin.change >= 0" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg v-if="(revenueProfitData.margin?.change || 0) >= 0" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                   <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
                   </svg>
-                  {{ revenueProfitData.margin.change >= 0 ? '+' : '' }}{{ revenueProfitData.margin.change.toFixed(1) }}%
+                  {{ (revenueProfitData.margin?.change || 0) >= 0 ? '+' : '' }}{{ (revenueProfitData.margin?.change || 0).toFixed(1) }}%
                 </span>
                 <span class="ml-1">vs previous period</span>
               </div>
@@ -219,11 +219,12 @@
         <div class="px-6 py-5 border-b border-gray-100">
           <h3 class="text-lg leading-6 font-medium text-gray-900">Product Demand Analysis</h3>
           <p class="mt-1 text-sm text-gray-500">
-            Sales performance by product
+            Sales performance and demand tracking based on restock data
           </p>
         </div>
         
         <div>
+          <!-- Product Demand Summary -->
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
@@ -254,31 +255,105 @@
                     <div class="text-sm text-gray-900">{{ item.units_sold }}</div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-center">
-                    <div class="text-sm text-gray-900">${{ item.revenue.toFixed(2) }}</div>
+                    <div class="text-sm text-gray-900">${{ (item.revenue || 0).toFixed(2) }}</div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-center">
-                    <div class="text-sm text-gray-900">${{ item.profit.toFixed(2) }}</div>
+                    <div class="text-sm text-gray-900">${{ (item.profit || 0).toFixed(2) }}</div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-center">
                     <span 
                       class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                      :class="getTrendClass(item.trend)"
+                      :class="getTrendClass(item.trend || 0)"
                     >
-                      <svg v-if="item.trend > 0" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg v-if="(item.trend || 0) > 0" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                       </svg>
-                      <svg v-else-if="item.trend < 0" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg v-else-if="(item.trend || 0) < 0" xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
                       </svg>
                       <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6" />
                       </svg>
-                      {{ formatTrend(item.trend) }}
+                      {{ formatTrend(item.trend || 0) }}
                     </span>
                   </td>
                 </tr>
               </tbody>
             </table>
+          </div>
+          
+          <!-- Detailed Demand Analysis -->
+          <div v-if="demandData.unit_counts && demandData.unit_counts.length > 0" class="mt-6 px-6">
+            <h4 class="text-base font-medium text-gray-700 mb-3">Detailed Demand By Machine & Product</h4>
+            
+            <div class="border rounded-lg shadow-sm overflow-hidden">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Location
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Machine
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Product
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                      Period
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                      Units Sold
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                      Daily Demand
+                    </th>
+                    <th scope="col" class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                      Revenue
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-for="(count, index) in sortedDemandCounts" :key="index" class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-sm text-gray-900">
+                      {{ count.location_name }}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900">
+                      {{ count.machine_name }}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900">
+                      {{ count.product_name }}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-500 text-center">
+                      {{ formatDateShort(count.start_date) }} - {{ formatDateShort(count.end_date) }}
+                      <div class="text-xs text-gray-400">({{ count.days_between }} days)</div>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900 text-center font-medium">
+                      {{ count.units_sold }}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900 text-center">
+                      {{ formatDailyDemand(count.daily_demand) }}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900 text-center">
+                      ${{ (count.revenue || 0).toFixed(2) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div v-else-if="demandData.products && demandData.products.length > 0 && (!demandData.unit_counts || demandData.unit_counts.length === 0)" class="px-6 py-4 text-center">
+            <p class="text-sm text-gray-500">
+              No detailed demand data is available for the selected period.
+              <br>Need at least two restock visits to the same machine to calculate demand.
+            </p>
+          </div>
+          
+          <div v-else class="px-6 py-4 text-center">
+            <p class="text-sm text-gray-500">
+              No demand data available. Record restock visits to track product demand.
+            </p>
           </div>
         </div>
       </div>
@@ -287,7 +362,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { api } from '../services/api'
 
 const loading = ref(true)
@@ -315,7 +390,22 @@ const stockLevelData = ref({
 })
 
 const demandData = ref({
+  unit_counts: [],
   products: []
+})
+
+// Computed property for sorted demand counts
+const sortedDemandCounts = computed(() => {
+  if (!demandData.value.unit_counts) return []
+  
+  return [...demandData.value.unit_counts]
+    .sort((a, b) => {
+      // Sort by location, then machine, then product, then date
+      if (a.location_name !== b.location_name) return a.location_name.localeCompare(b.location_name)
+      if (a.machine_name !== b.machine_name) return a.machine_name.localeCompare(b.machine_name)
+      if (a.product_name !== b.product_name) return a.product_name.localeCompare(b.product_name)
+      return new Date(b.end_date) - new Date(a.end_date) // Most recent first
+    })
 })
 
 // Helper functions
@@ -326,13 +416,32 @@ const getStockLevelClass = (quantity) => {
 }
 
 const getTrendClass = (trend) => {
+  if (trend === undefined || trend === null) return 'bg-gray-100 text-gray-800'
   if (trend > 10) return 'bg-green-100 text-green-800'
   if (trend < -10) return 'bg-red-100 text-red-800'
   return 'bg-gray-100 text-gray-800'
 }
 
 const formatTrend = (trend) => {
+  if (trend === undefined || trend === null) return '+0.0%'
   return `${trend >= 0 ? '+' : ''}${trend.toFixed(1)}%`
+}
+
+// Format date for compact display (MM/DD/YYYY)
+const formatDateShort = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', { 
+    month: 'numeric', 
+    day: 'numeric', 
+    year: 'numeric' 
+  })
+}
+
+// Format daily demand with 1 decimal place
+const formatDailyDemand = (demand) => {
+  if (demand === undefined || demand === null) return '0.0/day'
+  return demand.toFixed(1) + '/day'
 }
 
 // Fetch all locations
@@ -356,10 +465,40 @@ const fetchRevenueProfitData = async () => {
     }
     
     const response = await api.getRevenueProfitData(params)
-    revenueProfitData.value = response.data
+    
+    // Ensure we have a properly structured object
+    if (!response.data) {
+      revenueProfitData.value = {
+        revenue: { total: 0, change: 0 },
+        profit: { total: 0, change: 0 },
+        margin: { total: 0, change: 0 }
+      }
+      return
+    }
+    
+    revenueProfitData.value = {
+      revenue: {
+        total: response.data.revenue?.total || 0,
+        change: response.data.revenue?.change || 0
+      },
+      profit: {
+        total: response.data.profit?.total || 0,
+        change: response.data.profit?.change || 0
+      },
+      margin: {
+        total: response.data.margin?.total || 0,
+        change: response.data.margin?.change || 0
+      }
+    }
   } catch (err) {
     console.error('Error fetching revenue/profit data:', err)
     error.value = 'Failed to load revenue and profit data'
+    // Set default values on error
+    revenueProfitData.value = {
+      revenue: { total: 0, change: 0 },
+      profit: { total: 0, change: 0 },
+      margin: { total: 0, change: 0 }
+    }
   }
 }
 
@@ -371,10 +510,28 @@ const fetchStockLevelData = async () => {
     }
     
     const response = await api.getStockLevels(params)
-    stockLevelData.value = response.data
+    
+    // Ensure we have a properly structured object
+    if (!response.data) {
+      stockLevelData.value = {
+        low_stock_count: 0,
+        items: []
+      }
+      return
+    }
+    
+    stockLevelData.value = {
+      low_stock_count: response.data.low_stock_count || 0,
+      items: response.data.items || []
+    }
   } catch (err) {
     console.error('Error fetching stock level data:', err)
     error.value = 'Failed to load stock level data'
+    // Set default values on error
+    stockLevelData.value = {
+      low_stock_count: 0,
+      items: []
+    }
   }
 }
 
@@ -389,10 +546,47 @@ const fetchDemandData = async () => {
     }
     
     const response = await api.getDemandAnalysis(params)
-    demandData.value = response.data
+    console.log('Demand analysis data:', response.data)
+    
+    // Ensure we have a properly structured object with default values
+    if (!response.data) {
+      demandData.value = {
+        products: [],
+        unit_counts: []
+      }
+      return
+    }
+    
+    // Handle both old and new response formats
+    if (Array.isArray(response.data)) {
+      // Old format - just products array
+      demandData.value = {
+        products: response.data || [],
+        unit_counts: []
+      }
+    } else {
+      // New format with both unit_counts and products
+      demandData.value = {
+        products: response.data.products || [],
+        unit_counts: response.data.unit_counts || []
+      }
+      
+      // Convert date strings to Date objects for better sorting
+      if (demandData.value.unit_counts && demandData.value.unit_counts.length > 0) {
+        demandData.value.unit_counts.forEach(count => {
+          if (count.start_date) count.start_date = new Date(count.start_date)
+          if (count.end_date) count.end_date = new Date(count.end_date)
+        })
+      }
+    }
   } catch (err) {
     console.error('Error fetching demand analysis data:', err)
     error.value = 'Failed to load demand analysis data'
+    // Set default values on error
+    demandData.value = {
+      products: [],
+      unit_counts: []
+    }
   }
 }
 

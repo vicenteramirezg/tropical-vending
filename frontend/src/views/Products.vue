@@ -151,7 +151,7 @@
                       </select>
                     </div>
                     <div>
-                      <label for="cost_price" class="block text-sm font-medium text-gray-700">Cost Price ($)</label>
+                      <label for="cost_price" class="block text-sm font-medium text-gray-700">Cost ($)</label>
                       <input 
                         type="number" 
                         name="cost_price" 

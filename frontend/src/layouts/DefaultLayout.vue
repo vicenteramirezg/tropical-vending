@@ -140,7 +140,7 @@ const navigation = [
   { name: 'Locations', href: '/locations', routeName: 'locations' },
   { name: 'Machines', href: '/machines', routeName: 'machines' },
   { name: 'Products', href: '/products', routeName: 'products' },
-  { name: 'Restocks', href: '/restocks', routeName: 'restocks' },
+  { name: 'Visits', href: '/restocks', routeName: 'restocks' },
   { name: 'Purchases', href: '/purchases', routeName: 'purchases' },
   { name: 'Analytics', href: '/analytics', routeName: 'analytics' },
 ]

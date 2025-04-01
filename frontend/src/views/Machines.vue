@@ -137,6 +137,10 @@
                   </span>
                 </div>
                 <p v-if="machine.model" class="text-sm text-gray-500 mt-1">Model: {{ machine.model }}</p>
+                <p class="text-sm text-gray-500 mt-1">
+                  <span v-if="machine.product_count" class="text-primary-600 font-medium">{{ machine.product_count }} products</span>
+                  <span v-else class="text-gray-400 italic">No products</span>
+                </p>
               </div>
               <div class="flex space-x-2">
                 <button
@@ -147,6 +151,15 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                   Edit
+                </button>
+                <button
+                  @click="manageProducts(machine)"
+                  class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  Products
                 </button>
                 <button
                   @click="confirmDelete(machine)"
@@ -307,6 +320,166 @@
         </div>
       </div>
     </div>
+    
+    <!-- Products Modal -->
+    <div v-if="showProductsModal" class="fixed inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="closeProductsModal"></div>
+        
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                  Manage Products for {{ selectedMachine?.name }}
+                </h3>
+                
+                <div class="mt-4">
+                  <!-- Add New Product Form -->
+                  <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Add Product to Machine</h4>
+                    <form @submit.prevent="addProductToMachine" class="grid grid-cols-1 gap-y-3 sm:grid-cols-12 sm:gap-x-3">
+                      <div class="sm:col-span-6">
+                        <label for="product" class="block text-xs font-medium text-gray-700">Product</label>
+                        <select
+                          id="product"
+                          v-model="productForm.product"
+                          class="mt-1 block w-full pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md"
+                          required
+                        >
+                          <option value="" disabled>Select a product</option>
+                          <option 
+                            v-for="product in availableProducts" 
+                            :key="product.id" 
+                            :value="product.id"
+                          >
+                            {{ product.name }}
+                          </option>
+                        </select>
+                      </div>
+                      <div class="sm:col-span-3">
+                        <label for="price" class="block text-xs font-medium text-gray-700">Price</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 sm:text-sm">$</span>
+                          </div>
+                          <input 
+                            type="number" 
+                            id="price" 
+                            step="0.01" 
+                            min="0.01" 
+                            v-model="productForm.price"
+                            placeholder="0.00"
+                            class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-7 pr-3 py-2 sm:text-sm border-gray-300 rounded-md"
+                            required
+                          >
+                        </div>
+                      </div>
+                      <div class="sm:col-span-3 flex items-end">
+                        <button
+                          type="submit"
+                          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                  
+                  <!-- Products Table -->
+                  <div v-if="machineProducts.length > 0" class="border border-gray-200 rounded-md overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                      <thead class="bg-gray-50">
+                        <tr>
+                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Product
+                          </th>
+                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Price
+                          </th>
+                          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Current Stock
+                          </th>
+                          <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-200">
+                        <tr v-for="product in machineProducts" :key="product.id">
+                          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ product.product_name }}
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div class="flex items-center">
+                              <span v-if="product.editing">
+                                <div class="relative rounded-md shadow-sm">
+                                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">$</span>
+                                  </div>
+                                  <input 
+                                    type="number" 
+                                    step="0.01" 
+                                    min="0.01" 
+                                    v-model="product.newPrice"
+                                    class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-7 pr-3 py-1 sm:text-sm border-gray-300 rounded-md"
+                                  >
+                                </div>
+                              </span>
+                              <span v-else>${{ typeof product.price === 'number' ? product.price.toFixed(2) : Number(product.price).toFixed(2) }}</span>
+                            </div>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ product.current_stock || 'Not set' }}
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                            <button 
+                              v-if="product.editing"
+                              @click="updateProductPrice(product)"
+                              class="text-primary-600 hover:text-primary-900"
+                            >
+                              Save
+                            </button>
+                            <button 
+                              v-else
+                              @click="editProductPrice(product)"
+                              class="text-primary-600 hover:text-primary-900"
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              @click="removeProductFromMachine(product)"
+                              class="text-red-600 hover:text-red-900"
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  <div v-else class="text-center p-6 bg-gray-50 rounded-md">
+                    <p class="text-sm text-gray-500">No products added to this machine yet.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button 
+              type="button"
+              @click="closeProductsModal"
+              class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -320,6 +493,16 @@ const loading = ref(true)
 const error = ref(null)
 const locationInfo = ref({})
 const locationNames = ref({})
+
+// Additional state for machine products management
+const allProducts = ref([])
+const machineProducts = ref([])
+const loadingProducts = ref(false)
+const availableProducts = computed(() => {
+  // Filter out products already in the machine
+  const existingProductIds = machineProducts.value.map(p => p.product)
+  return allProducts.value.filter(p => !existingProductIds.includes(p.id))
+})
 
 // Filter state
 const filters = ref({
@@ -404,6 +587,8 @@ const showModal = ref(false)
 const showDeleteModal = ref(false)
 const isEditing = ref(false)
 const machineToDelete = ref(null)
+const showProductsModal = ref(false)
+const selectedMachine = ref(null)
 
 // Form for creating/editing a machine
 const machineForm = ref({
@@ -414,20 +599,34 @@ const machineForm = ref({
   model: ''
 })
 
+// Form for adding a new product
+const productForm = ref({
+  product: '',
+  price: ''
+})
+
 // Fetch all machines with filters
 const fetchMachines = async () => {
   loading.value = true
+  error.value = null
+  
+  console.log('Fetching machines with filters:', filters.value)
+  
   try {
-    const params = {
-      location: filters.value.location || undefined,
-      machine_type: filters.value.machineType || undefined
+    const params = {}
+    if (filters.value.location) {
+      params.location = filters.value.location
     }
     
     const response = await api.getMachines(params)
-    machines.value = response.data
+    console.log('Machines fetched successfully:', response.data)
+    machines.value = response.data.map(machine => ({
+      ...machine,
+      location_name: machine.location_name || locationNames.value[machine.location] || 'Unknown'
+    }))
   } catch (err) {
     console.error('Error fetching machines:', err)
-    error.value = 'Failed to load machines. Please try again later.'
+    error.value = 'Failed to load machines. Please try again.'
   } finally {
     loading.value = false
   }
@@ -529,8 +728,193 @@ const deleteMachine = async () => {
   }
 }
 
+// Open modal to manage products for a machine
+const manageProducts = async (machine) => {
+  // Clear previous machine products first
+  machineProducts.value = []
+  selectedMachine.value = machine
+  loadingProducts.value = true
+  productForm.value = { product: '', price: '' }
+  
+  try {
+    // Fetch all products
+    const productsResponse = await api.getProducts()
+    allProducts.value = productsResponse.data
+    
+    // Fetch machine's current products with explicit machine ID filter
+    console.log(`Fetching products for machine ID: ${machine.id}`)
+    
+    // Create a params object with the machine ID
+    const params = { machine: machine.id }
+    console.log('Request params:', params)
+    
+    const machineItemsResponse = await api.getMachineItems(params)
+    console.log(`Got response for machine ${machine.id}:`, machineItemsResponse.data)
+    
+    // Check if we got a valid response with data
+    if (machineItemsResponse && machineItemsResponse.data) {
+      // Ensure we only include items for this specific machine
+      const filteredItems = machineItemsResponse.data.filter(item => item.machine == machine.id)
+      console.log(`Filtered ${machineItemsResponse.data.length} items to ${filteredItems.length} for machine ${machine.id}`)
+      
+      machineProducts.value = filteredItems.map(item => ({
+        ...item,
+        editing: false,
+        newPrice: item.price,
+        price: typeof item.price === 'string' ? parseFloat(item.price) : item.price
+      }))
+    }
+    
+    showProductsModal.value = true
+  } catch (err) {
+    console.error('Error fetching machine products:', err)
+    error.value = 'Failed to load machine products. Please try again.'
+  } finally {
+    loadingProducts.value = false
+  }
+}
+
+// Close products modal and reset state
+const closeProductsModal = () => {
+  showProductsModal.value = false
+  machineProducts.value = []
+  selectedMachine.value = null
+  productForm.value = { product: '', price: '' }
+}
+
+// Add a new product to the machine
+const addProductToMachine = async () => {
+  try {
+    const machineId = selectedMachine.value.id
+    const productId = parseInt(productForm.value.product)
+    const productPrice = parseFloat(productForm.value.price)
+    
+    const data = {
+      machine: machineId,
+      product: productId,
+      price: productPrice
+    }
+    
+    console.log('Adding product to machine with data:', data)
+    await api.createMachineItem(data)
+    
+    // Reset form and refresh products
+    productForm.value.product = ''
+    productForm.value.price = ''
+    
+    // Reload machine products with explicit filter
+    console.log(`Reloading products for machine ID: ${machineId}`)
+    const params = { machine: machineId }
+    
+    const machineItemsResponse = await api.getMachineItems(params)
+    console.log(`Got response for machine ${machineId}:`, machineItemsResponse.data)
+    
+    // Ensure we only include items for this specific machine
+    const filteredItems = machineItemsResponse.data.filter(item => item.machine == machineId)
+    console.log(`Filtered ${machineItemsResponse.data.length} items to ${filteredItems.length} for machine ${machineId}`)
+    
+    machineProducts.value = filteredItems.map(item => ({
+      ...item,
+      editing: false,
+      newPrice: item.price,
+      price: typeof item.price === 'string' ? parseFloat(item.price) : item.price
+    }))
+    
+    // Refresh machines list to update product counts
+    await fetchMachines()
+  } catch (err) {
+    console.error('Error adding product to machine:', err)
+    if (err.response && err.response.data) {
+      console.error('Server error details:', err.response.data)
+      error.value = `Failed to add product: ${JSON.stringify(err.response.data)}`
+    } else {
+      error.value = 'Failed to add product to machine. Please try again.'
+    }
+  }
+}
+
+// Edit a product price
+const editProductPrice = (product) => {
+  product.editing = true
+  product.newPrice = product.price
+}
+
+// Update a product price
+const updateProductPrice = async (product) => {
+  try {
+    const machineId = selectedMachine.value.id
+    await api.updateMachineItem(product.id, {
+      machine: machineId,
+      product: product.product,
+      price: parseFloat(product.newPrice)
+    })
+    
+    product.price = parseFloat(product.newPrice)
+    product.editing = false
+    
+    // Reload machine products with explicit filtering
+    console.log(`Reloading products after price update for machine ID: ${machineId}`)
+    const params = { machine: machineId }
+    
+    const machineItemsResponse = await api.getMachineItems(params)
+    console.log(`Got response for machine ${machineId} after price update:`, machineItemsResponse.data)
+    
+    // Ensure we only include items for this specific machine
+    const filteredItems = machineItemsResponse.data.filter(item => item.machine == machineId)
+    console.log(`Filtered ${machineItemsResponse.data.length} items to ${filteredItems.length} for machine ${machineId}`)
+    
+    machineProducts.value = filteredItems.map(item => ({
+      ...item,
+      editing: false,
+      newPrice: item.price,
+      price: typeof item.price === 'string' ? parseFloat(item.price) : item.price
+    }))
+  } catch (err) {
+    console.error('Error updating product price:', err)
+    error.value = 'Failed to update product price. Please try again.'
+  }
+}
+
+// Remove a product from the machine
+const removeProductFromMachine = async (product) => {
+  if (!confirm(`Are you sure you want to remove ${product.product_name} from this machine?`)) {
+    return
+  }
+  
+  try {
+    const machineId = selectedMachine.value.id
+    await api.deleteMachineItem(product.id)
+    
+    // Reload machine products with explicit filtering
+    console.log(`Reloading products after deletion for machine ID: ${machineId}`)
+    const params = { machine: machineId }
+    
+    const machineItemsResponse = await api.getMachineItems(params)
+    console.log(`Got response for machine ${machineId} after deletion:`, machineItemsResponse.data)
+    
+    // Ensure we only include items for this specific machine
+    const filteredItems = machineItemsResponse.data.filter(item => item.machine == machineId)
+    console.log(`Filtered ${machineItemsResponse.data.length} items to ${filteredItems.length} for machine ${machineId}`)
+    
+    machineProducts.value = filteredItems.map(item => ({
+      ...item,
+      editing: false,
+      newPrice: item.price,
+      price: typeof item.price === 'string' ? parseFloat(item.price) : item.price
+    }))
+    
+    // Refresh machines list to update product counts
+    await fetchMachines()
+  } catch (err) {
+    console.error('Error removing product from machine:', err)
+    error.value = 'Failed to remove product from machine. Please try again.'
+  }
+}
+
 // Initialize data on component mount
 onMounted(async () => {
-  await Promise.all([fetchLocations(), fetchMachines()])
+  console.log('Machines component mounted - fetching data')
+  await fetchLocations()
+  await fetchMachines()
 })
 </script> 

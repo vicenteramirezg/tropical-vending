@@ -17,4 +17,11 @@ class VisitSerializer(serializers.ModelSerializer):
         return obj.location.name
     
     def get_user_name(self, obj):
-        return f"{obj.user.first_name} {obj.user.last_name}" if obj.user.first_name else obj.user.username 
+        return f"{obj.user.first_name} {obj.user.last_name}" if obj.user.first_name else obj.user.username
+        
+    def create(self, validated_data):
+        # If user is not provided, use the current authenticated user
+        request = self.context.get('request')
+        if 'user' not in validated_data and request and request.user.is_authenticated:
+            validated_data['user'] = request.user
+        return super().create(validated_data) 

@@ -44,7 +44,9 @@ class ProductSerializer(serializers.ModelSerializer):
                 product=product,
                 quantity=1,  # Initial reference quantity
                 total_cost=Decimal(str(cost_price)),  # Convert to Decimal safely
-                purchased_at=timezone.now()  # Use current time as purchase date
+                purchased_at=timezone.now(),  # Use current time as purchase date
+                supplier='',  # Empty supplier
+                notes=''  # Empty notes
             )
         
         return product
@@ -66,7 +68,9 @@ class ProductSerializer(serializers.ModelSerializer):
                     product=instance,
                     quantity=1,  # Initial reference quantity
                     total_cost=Decimal(str(cost_price)),  # Convert to Decimal safely
-                    purchased_at=timezone.now()  # Use current time as purchase date
+                    purchased_at=timezone.now(),  # Use current time as purchase date
+                    supplier='',  # Empty supplier
+                    notes=''  # Empty notes
                 )
                 
         return instance 

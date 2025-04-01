@@ -6,6 +6,8 @@ class WholesalePurchase(models.Model):
     quantity = models.IntegerField()
     total_cost = models.DecimalField(max_digits=10, decimal_places=2)
     purchased_at = models.DateTimeField()
+    supplier = models.CharField(max_length=100, blank=True, default='')
+    notes = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

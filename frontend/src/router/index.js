@@ -41,7 +41,7 @@ const router = createRouter({
           path: 'restocks',
           name: 'restocks',
           component: () => import('../views/Restocks.vue'),
-          meta: { title: 'Restocks' }
+          meta: { title: 'Visits' }
         },
         {
           path: 'purchases',

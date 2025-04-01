@@ -54,13 +54,17 @@
                 <span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                   {{ purchase.quantity }} units
                 </span>
+                <span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                  {{ purchase.supplier || "Unknown" }}
+                </span>
               </div>
               <div class="mt-1">
                 <p class="text-sm text-gray-500">
-                  Date: {{ formatDate(purchase.purchase_date) }} | Supplier: {{ purchase.supplier }}
+                  Date: {{ formatDate(purchase.purchase_date) }}
                 </p>
                 <p class="text-sm text-gray-500">
-                  Cost: ${{ purchase.cost_per_unit.toFixed(2) }} per unit | Total: ${{ (purchase.cost_per_unit * purchase.quantity).toFixed(2) }}
+                  Total: ${{ parseFloat(purchase.total_cost).toFixed(2) }} | 
+                  Unit Cost: ${{ parseFloat(purchase.cost_per_unit || (purchase.total_cost / purchase.quantity)).toFixed(2) }}
                 </p>
               </div>
             </div>
@@ -117,14 +121,17 @@
                     
                     <div>
                       <label for="supplier" class="block text-sm font-medium text-gray-700">Supplier</label>
-                      <input 
-                        type="text" 
-                        name="supplier" 
-                        id="supplier" 
+                      <select
+                        id="supplier"
+                        name="supplier"
                         v-model="purchaseForm.supplier"
-                        class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
                         required
                       >
+                        <option value="" disabled>Select a supplier</option>
+                        <option value="Sams">Sams</option>
+                        <option value="Star">Star</option>
+                      </select>
                     </div>
                     
                     <div>
@@ -148,20 +155,22 @@
                           id="quantity" 
                           v-model="purchaseForm.quantity"
                           min="1"
+                          @change="calculateUnitCost"
                           class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                           required
                         >
                       </div>
                       
                       <div>
-                        <label for="cost_per_unit" class="block text-sm font-medium text-gray-700">Cost Per Unit ($)</label>
+                        <label for="total_cost" class="block text-sm font-medium text-gray-700">Total Cost ($)</label>
                         <input 
                           type="number" 
-                          name="cost_per_unit" 
-                          id="cost_per_unit" 
-                          v-model="purchaseForm.cost_per_unit"
+                          name="total_cost" 
+                          id="total_cost" 
+                          v-model="purchaseForm.total_cost"
                           min="0.01"
                           step="0.01"
+                          @change="calculateUnitCost"
                           class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                           required
                         >
@@ -179,10 +188,12 @@
                       ></textarea>
                     </div>
                     
-                    <div class="bg-gray-50 p-3 rounded-md">
-                      <div class="text-sm font-medium text-gray-700">Total Cost:</div>
-                      <div class="text-lg font-bold text-primary-600">
-                        ${{ totalCost.toFixed(2) }}
+                    <div class="grid grid-cols-1 gap-4">
+                      <div class="bg-gray-50 p-3 rounded-md">
+                        <div class="text-sm font-medium text-gray-700">Unit Cost:</div>
+                        <div class="text-lg font-bold text-primary-600">
+                          ${{ unitCost.toFixed(2) }} per unit
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -281,15 +292,26 @@ const purchaseForm = ref({
   supplier: '',
   purchase_date: '',
   quantity: 1,
-  cost_per_unit: 0,
+  total_cost: 0,
   notes: ''
 })
 
 // Computed total cost
 const totalCost = computed(() => {
   const quantity = parseFloat(purchaseForm.value.quantity) || 0
-  const costPerUnit = parseFloat(purchaseForm.value.cost_per_unit) || 0
-  return quantity * costPerUnit
+  const totalCost = parseFloat(purchaseForm.value.total_cost) || 0
+  return totalCost
+})
+
+// Computed unit cost
+const unitCost = computed(() => {
+  const quantity = parseFloat(purchaseForm.value.quantity) || 0
+  const totalCost = parseFloat(purchaseForm.value.total_cost) || 0
+  
+  if (quantity > 0) {
+    return totalCost / quantity
+  }
+  return 0
 })
 
 // Format date for display
@@ -304,7 +326,23 @@ const fetchPurchases = async () => {
   loading.value = true
   try {
     const response = await api.getPurchases()
-    purchases.value = response.data
+    console.log('Purchases data:', response.data)
+    purchases.value = response.data.map(purchase => {
+      // Ensure all the necessary fields are available
+      const unitCost = purchase.cost_per_unit || 
+                      (purchase.unit_cost) || 
+                      (purchase.total_cost && purchase.quantity ? purchase.total_cost / purchase.quantity : 0)
+      
+      // Handle both purchased_at and purchase_date
+      const purchaseDate = purchase.purchase_date || purchase.purchased_at
+      
+      return {
+        ...purchase,
+        purchase_date: purchaseDate,
+        total_cost: purchase.total_cost || (purchase.cost_per_unit * purchase.quantity),
+        cost_per_unit: unitCost
+      }
+    })
   } catch (err) {
     console.error('Error fetching purchases:', err)
     error.value = 'Failed to load purchases. Please try again later.'
@@ -339,7 +377,7 @@ const openAddModal = () => {
     supplier: '',
     purchase_date: `${year}-${month}-${day}`,
     quantity: 1,
-    cost_per_unit: 0,
+    total_cost: 0,
     notes: ''
   }
   
@@ -349,15 +387,33 @@ const openAddModal = () => {
 // Open modal to edit an existing purchase
 const editPurchase = (purchase) => {
   isEditing.value = true
+  
+  // Ensure we have the total cost
+  const totalCost = purchase.total_cost || (purchase.cost_per_unit * purchase.quantity)
+  
+  // Format date properly - handling both purchased_at and purchase_date
+  let dateString = purchase.purchased_at || purchase.purchase_date
+  // Extract just the date part (YYYY-MM-DD)
+  let formattedDate = dateString ? dateString.split('T')[0] : ''
+  
+  // If no valid date is found, use today
+  if (!formattedDate) {
+    const today = new Date()
+    formattedDate = today.toISOString().split('T')[0]
+  }
+  
   purchaseForm.value = {
     id: purchase.id,
     product: purchase.product,
-    supplier: purchase.supplier,
-    purchase_date: purchase.purchase_date.split('T')[0], // Extract just the date part
+    supplier: purchase.supplier || '',
+    purchase_date: formattedDate,
     quantity: purchase.quantity,
-    cost_per_unit: purchase.cost_per_unit,
+    total_cost: totalCost,
     notes: purchase.notes || ''
   }
+  
+  // Calculate unit cost for display
+  calculateUnitCost()
   
   showModal.value = true
 }
@@ -365,17 +421,59 @@ const editPurchase = (purchase) => {
 // Save the purchase (create or update)
 const savePurchase = async () => {
   try {
-    if (isEditing.value) {
-      await api.updatePurchase(purchaseForm.value.id, purchaseForm.value)
-    } else {
-      await api.createPurchase(purchaseForm.value)
+    // Validate inputs
+    const quantity = parseInt(purchaseForm.value.quantity) || 0
+    const totalCost = parseFloat(purchaseForm.value.total_cost) || 0
+    
+    if (quantity <= 0) {
+      error.value = 'Quantity must be greater than zero'
+      return
     }
+    
+    if (totalCost <= 0) {
+      error.value = 'Total cost must be greater than zero'
+      return
+    }
+    
+    // Format the date properly with time component
+    const dateWithTime = `${purchaseForm.value.purchase_date}T12:00:00`
+    
+    // Prepare data for API
+    const purchaseData = {
+      product: purchaseForm.value.product,
+      supplier: purchaseForm.value.supplier,
+      purchased_at: dateWithTime,       // Use purchased_at which is the actual model field
+      purchase_date: dateWithTime,      // Also include purchase_date as the serializer expects it
+      quantity: quantity,
+      total_cost: totalCost,
+      notes: purchaseForm.value.notes || ''
+    }
+    
+    console.log('Saving purchase with data:', purchaseData)
+    
+    let response
+    if (isEditing.value) {
+      response = await api.updatePurchase(purchaseForm.value.id, purchaseData)
+    } else {
+      response = await api.createPurchase(purchaseData)
+    }
+    
+    console.log('Purchase saved successfully:', response.data)
+    
+    // Get the updated product to see the new average cost
+    const productResponse = await api.getProduct(purchaseForm.value.product)
+    console.log('Updated product cost:', productResponse.data.average_cost)
     
     showModal.value = false
     await fetchPurchases()
   } catch (err) {
     console.error('Error saving purchase:', err)
-    error.value = 'Failed to save purchase. Please try again.'
+    if (err.response && err.response.data) {
+      console.error('Server error details:', err.response.data)
+      error.value = `Failed to save purchase: ${JSON.stringify(err.response.data)}`
+    } else {
+      error.value = 'Failed to save purchase. Please try again.'
+    }
   }
 }
 
@@ -396,6 +494,20 @@ const deletePurchase = async () => {
   } catch (err) {
     console.error('Error deleting purchase:', err)
     error.value = 'Failed to delete purchase. Please try again.'
+  }
+}
+
+// Calculate unit cost when quantity or total cost changes
+const calculateUnitCost = () => {
+  const quantity = parseFloat(purchaseForm.value.quantity) || 0
+  const totalCost = parseFloat(purchaseForm.value.total_cost) || 0
+  
+  // Avoid division by zero
+  if (quantity > 0) {
+    // We're storing this in case the backend API expects it
+    purchaseForm.value.cost_per_unit = totalCost / quantity
+  } else {
+    purchaseForm.value.cost_per_unit = 0
   }
 }
 

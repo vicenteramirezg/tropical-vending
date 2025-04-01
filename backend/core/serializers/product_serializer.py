@@ -6,7 +6,6 @@ from django.utils import timezone
 
 class ProductSerializer(serializers.ModelSerializer):
     average_cost = serializers.SerializerMethodField()
-    image_url = serializers.SerializerMethodField()
     cost_price = serializers.DecimalField(write_only=True, required=False, default=0, max_digits=10, decimal_places=2)
     
     class Meta:
@@ -15,16 +14,13 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at', 'average_cost']
         extra_kwargs = {
             'unit_type': {'required': False, 'default': 'unit'},
-            'product_type': {'required': False, 'default': 'Soda'}
+            'product_type': {'required': False, 'default': 'Soda'},
+            'image_url': {'required': False}
         }
     
     def get_average_cost(self, obj):
         return obj.average_cost
     
-    def get_image_url(self, obj):
-        # Return the image_url directly since it's a field on the model now
-        return obj.image_url
-        
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         # Add cost_price to representation using average_cost

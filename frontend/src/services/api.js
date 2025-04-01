@@ -119,30 +119,10 @@ export const api = {
     return apiClient.get(`/products/${id}/`)
   },
   createProduct(data) {
-    // Use FormData for file uploads
-    const formData = new FormData()
-    Object.keys(data).forEach(key => {
-      formData.append(key, data[key])
-    })
-    
-    return apiClient.post('/products/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+    return apiClient.post('/products/', data)
   },
   updateProduct(id, data) {
-    // Use FormData for file uploads
-    const formData = new FormData()
-    Object.keys(data).forEach(key => {
-      formData.append(key, data[key])
-    })
-    
-    return apiClient.put(`/products/${id}/`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+    return apiClient.put(`/products/${id}/`, data)
   },
   deleteProduct(id) {
     return apiClient.delete(`/products/${id}/`)

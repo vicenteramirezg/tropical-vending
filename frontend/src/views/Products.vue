@@ -352,10 +352,13 @@ const editProduct = (product) => {
 // Save the product (create or update)
 const saveProduct = async () => {
   try {
+    console.log('Product form data before saving:', JSON.stringify(productForm.value))
+    
     if (isEditing.value) {
-      await api.updateProduct(productForm.value.id, productForm.value)
+      const response = await api.updateProduct(productForm.value.id, productForm.value)
+      console.log('Product updated successfully:', response.data)
     } else {
-      console.log('Sending product data:', productForm.value)
+      console.log('Sending product data:', JSON.stringify(productForm.value))
       const response = await api.createProduct(productForm.value)
       console.log('Product created successfully:', response.data)
     }

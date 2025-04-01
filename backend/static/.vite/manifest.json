@@ -27,37 +27,12 @@
       "assets/index-YMPk74Zb.css"
     ],
     "assets": [
-      "assets/logo-6w80lSXT.png",
-      "assets/favicon-CaKar78e.ico",
-      "assets/apple-touch-icon-Ccl57_s4.png",
-      "assets/favicon-32x32-B5xZ-IEK.png",
-      "assets/favicon-16x16-Bibg_cvD.png",
-      "assets/site-BwHFeIBa.webmanifest"
+      "assets/logo-6w80lSXT.png"
     ]
-  },
-  "src/assets/images/apple-touch-icon.png": {
-    "file": "assets/apple-touch-icon-Ccl57_s4.png",
-    "src": "src/assets/images/apple-touch-icon.png"
-  },
-  "src/assets/images/favicon-16x16.png": {
-    "file": "assets/favicon-16x16-Bibg_cvD.png",
-    "src": "src/assets/images/favicon-16x16.png"
-  },
-  "src/assets/images/favicon-32x32.png": {
-    "file": "assets/favicon-32x32-B5xZ-IEK.png",
-    "src": "src/assets/images/favicon-32x32.png"
-  },
-  "src/assets/images/favicon.ico": {
-    "file": "assets/favicon-CaKar78e.ico",
-    "src": "src/assets/images/favicon.ico"
   },
   "src/assets/images/logo.png": {
     "file": "assets/logo-6w80lSXT.png",
     "src": "src/assets/images/logo.png"
-  },
-  "src/assets/images/site.webmanifest": {
-    "file": "assets/site-BwHFeIBa.webmanifest",
-    "src": "src/assets/images/site.webmanifest"
   },
   "src/views/Analytics.vue": {
     "file": "assets/Analytics-CPfVNaM-.js",

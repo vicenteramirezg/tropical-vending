@@ -6,10 +6,6 @@
       "index.html"
     ]
   },
-  "favicon.ico": {
-    "file": "assets/favicon-CaKar78e.ico",
-    "src": "favicon.ico"
-  },
   "index.html": {
     "file": "assets/index-BZWvr7Lv.js",
     "name": "index",
@@ -31,8 +27,7 @@
       "assets/index-YMPk74Zb.css"
     ],
     "assets": [
-      "assets/logo-6w80lSXT.png",
-      "assets/favicon-CaKar78e.ico"
+      "assets/logo-6w80lSXT.png"
     ]
   },
   "src/assets/images/logo.png": {

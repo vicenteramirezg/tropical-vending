@@ -13,13 +13,7 @@
           <div class="flex h-20 items-center justify-between">
             <div class="flex items-center">
               <div class="text-primary-700 text-2xl font-bold flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="4" y="2" width="16" height="20" rx="2" />
-                  <path d="M8 6h8" />
-                  <path d="M8 10h4" />
-                  <path d="M16 14h-4" />
-                  <path d="M6 18h12" />
-                </svg>
+                <img src="../assets/images/logo.png" alt="Tropical Vending Logo" class="h-10 w-auto mr-2" />
                 Tropical Vending
               </div>
             </div>
@@ -80,13 +74,7 @@
                 <div class="absolute inset-0 bg-gradient-to-br from-primary-400 to-primary-700 opacity-80"></div>
                 <div class="absolute inset-0 flex items-center justify-center">
                   <div class="text-white space-y-4 p-6 text-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                      <rect x="4" y="2" width="16" height="20" rx="2" />
-                      <line x1="8" y1="6" x2="16" y2="6" />
-                      <line x1="8" y1="10" x2="12" y2="10" />
-                      <line x1="16" y1="14" x2="12" y2="14" />
-                      <line x1="6" y1="18" x2="18" y2="18" />
-                    </svg>
+                    <img src="../assets/images/logo.png" alt="Tropical Vending Logo" class="h-24 w-auto mx-auto" />
                     <h2 class="text-xl font-semibold">Powered by AI</h2>
                     <p>Advanced analytics and predictions to optimize your business</p>
                   </div>

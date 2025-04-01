@@ -5,7 +5,10 @@
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <span class="text-white text-xl font-bold">Tropical Vending</span>
+              <router-link to="/" class="flex items-center">
+                <img src="../assets/images/logo.png" alt="Tropical Vending Logo" class="h-8 w-auto mr-2" />
+                <span class="text-white text-xl font-bold">Tropical Vending</span>
+              </router-link>
             </div>
             <div class="hidden md:block">
               <div class="ml-10 flex items-baseline space-x-4">
@@ -117,9 +120,12 @@
 
     <footer class="bg-white py-4 border-t border-gray-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p class="text-center text-gray-500 text-sm">
-          Made with <span class="text-yellow-500">💛</span> by <a href="https://garat.dev" target="_blank" class="text-primary-600 hover:text-primary-700">Garat.dev</a>
-        </p>
+        <div class="flex flex-col items-center">
+          <img src="../assets/images/logo.png" alt="Tropical Vending Logo" class="h-8 w-auto mb-2" />
+          <p class="text-center text-gray-500 text-sm">
+            Made with <span class="text-yellow-500">💛</span> by <a href="https://garat.dev" target="_blank" class="text-primary-600 hover:text-primary-700">Garat.dev</a>
+          </p>
+        </div>
       </div>
     </footer>
   </div>

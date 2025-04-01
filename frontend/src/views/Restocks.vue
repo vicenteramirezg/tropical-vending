@@ -542,26 +542,93 @@ const saveRestock = async () => {
     
     // Process each machine restock
     for (const machine of locationMachines.value) {
-      // Create a machine restock for this visit and machine
-      const restockData = {
-        visit: visitId,
-        machine: machine.id,
-        notes: ''
+      let visitMachineRestockId;
+      
+      if (isEditing.value) {
+        // When editing, look for an existing restock for this machine
+        try {
+          const existingRestocksResponse = await api.getRestocks({ 
+            visit: visitId,
+            machine: machine.id 
+          });
+          
+          if (existingRestocksResponse.data.length > 0) {
+            // Update the existing restock
+            const existingRestock = existingRestocksResponse.data[0];
+            const restockData = {
+              visit: visitId,
+              machine: machine.id,
+              notes: existingRestock.notes || ''
+            };
+            
+            await api.updateRestock(existingRestock.id, restockData);
+            visitMachineRestockId = existingRestock.id;
+          } else {
+            // Create a new restock if none exists for this machine
+            const restockData = {
+              visit: visitId,
+              machine: machine.id,
+              notes: ''
+            };
+            
+            const machineRestockResponse = await api.createRestock(restockData);
+            visitMachineRestockId = machineRestockResponse.data.id;
+          }
+        } catch (err) {
+          console.error('Error handling machine restock:', err);
+          throw err;
+        }
+      } else {
+        // Creating a new visit, so create new restocks
+        const restockData = {
+          visit: visitId,
+          machine: machine.id,
+          notes: ''
+        };
+        
+        const machineRestockResponse = await api.createRestock(restockData);
+        visitMachineRestockId = machineRestockResponse.data.id;
       }
       
-      const machineRestockResponse = await api.createRestock(restockData)
-      const visitMachineRestockId = machineRestockResponse.data.id
-      
-      // Create restock entries for each product
+      // Process restock entries for each product
       for (const product of machine.products) {
-        const restockEntryData = {
-          visit_machine_restock: visitMachineRestockId,
-          product: product.id,
-          stock_before: parseInt(product.stock_before) || 0,
-          restocked: parseInt(product.restocked) || 0
+        try {
+          // For editing, check if an entry already exists
+          if (isEditing.value) {
+            const existingEntriesResponse = await api.getRestockEntries({
+              visit_machine_restock: visitMachineRestockId,
+              product: product.id
+            });
+            
+            const restockEntryData = {
+              visit_machine_restock: visitMachineRestockId,
+              product: product.id,
+              stock_before: parseInt(product.stock_before) || 0,
+              restocked: parseInt(product.restocked) || 0
+            };
+            
+            if (existingEntriesResponse.data.length > 0) {
+              // Update existing entry
+              await api.updateRestockEntry(existingEntriesResponse.data[0].id, restockEntryData);
+            } else {
+              // Create new entry
+              await api.createRestockEntry(restockEntryData);
+            }
+          } else {
+            // For new visits, always create new entries
+            const restockEntryData = {
+              visit_machine_restock: visitMachineRestockId,
+              product: product.id,
+              stock_before: parseInt(product.stock_before) || 0,
+              restocked: parseInt(product.restocked) || 0
+            };
+            
+            await api.createRestockEntry(restockEntryData);
+          }
+        } catch (err) {
+          console.error('Error handling restock entry:', err);
+          throw err;
         }
-        
-        await api.createRestockEntry(restockEntryData)
       }
     }
     

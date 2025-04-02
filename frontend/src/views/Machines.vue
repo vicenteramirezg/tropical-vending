@@ -502,6 +502,7 @@ const locationNames = ref({})
 const allProducts = ref([])
 const machineProducts = ref([])
 const loadingProducts = ref(false)
+const loadingProductOperation = ref(false) // Loading state for individual operations
 const availableProducts = computed(() => {
   // Filter out products already in the machine
   const existingProductIds = machineProducts.value.map(p => p.product)
@@ -746,20 +747,11 @@ const manageProducts = async (machine) => {
     allProducts.value = productsResponse.data
     
     // Fetch machine's current products with explicit machine ID filter
-    console.log(`Fetching products for machine ID: ${machine.id}`)
-    
-    // Create a params object with the machine ID
     const params = { machine: machine.id }
-    console.log('Request params:', params)
-    
     const machineItemsResponse = await api.getMachineItems(params)
-    console.log(`Got response for machine ${machine.id}:`, machineItemsResponse.data)
     
-    // Check if we got a valid response with data
     if (machineItemsResponse && machineItemsResponse.data) {
-      // Ensure we only include items for this specific machine
       const filteredItems = machineItemsResponse.data.filter(item => item.machine == machine.id)
-      console.log(`Filtered ${machineItemsResponse.data.length} items to ${filteredItems.length} for machine ${machine.id}`)
       
       machineProducts.value = filteredItems.map(item => ({
         ...item,
@@ -788,6 +780,7 @@ const closeProductsModal = () => {
 
 // Add a new product to the machine
 const addProductToMachine = async () => {
+  loadingProductOperation.value = true
   try {
     const machineId = selectedMachine.value.id
     const productId = parseInt(productForm.value.product)
@@ -799,23 +792,15 @@ const addProductToMachine = async () => {
       price: productPrice
     }
     
-    console.log('Adding product to machine with data:', data)
     await api.createMachineItem(data)
     
-    // Reset form and refresh products
     productForm.value.product = ''
     productForm.value.price = ''
     
-    // Reload machine products with explicit filter
-    console.log(`Reloading products for machine ID: ${machineId}`)
     const params = { machine: machineId }
-    
     const machineItemsResponse = await api.getMachineItems(params)
-    console.log(`Got response for machine ${machineId}:`, machineItemsResponse.data)
     
-    // Ensure we only include items for this specific machine
     const filteredItems = machineItemsResponse.data.filter(item => item.machine == machineId)
-    console.log(`Filtered ${machineItemsResponse.data.length} items to ${filteredItems.length} for machine ${machineId}`)
     
     machineProducts.value = filteredItems.map(item => ({
       ...item,
@@ -824,16 +809,16 @@ const addProductToMachine = async () => {
       price: typeof item.price === 'string' ? parseFloat(item.price) : item.price
     }))
     
-    // Refresh machines list to update product counts
     await fetchMachines()
   } catch (err) {
     console.error('Error adding product to machine:', err)
     if (err.response && err.response.data) {
-      console.error('Server error details:', err.response.data)
       error.value = `Failed to add product: ${JSON.stringify(err.response.data)}`
     } else {
       error.value = 'Failed to add product to machine. Please try again.'
     }
+  } finally {
+    loadingProductOperation.value = false
   }
 }
 

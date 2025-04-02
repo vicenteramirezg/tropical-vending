@@ -390,76 +390,78 @@
                   
                   <!-- Products Table -->
                   <div v-if="machineProducts.length > 0" class="border border-gray-200 rounded-md overflow-hidden">
-                    <div class="overflow-x-auto">
-                      <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                          <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Product
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Price
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Current Stock
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                          <tr v-for="product in machineProducts" :key="product.id">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {{ product.product_name }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              <div class="flex items-center">
-                                <span v-if="product.editing">
-                                  <div class="relative rounded-md shadow-sm">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                      <span class="text-gray-500 sm:text-sm">$</span>
+                    <div class="overflow-x-auto -mx-4 sm:mx-0">
+                      <div class="inline-block min-w-full align-middle">
+                        <table class="min-w-full divide-y divide-gray-200">
+                          <thead class="bg-gray-50">
+                            <tr>
+                              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Product
+                              </th>
+                              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Price
+                              </th>
+                              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Current Stock
+                              </th>
+                              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody class="bg-white divide-y divide-gray-200">
+                            <tr v-for="product in machineProducts" :key="product.id">
+                              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ product.product_name }}
+                              </td>
+                              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div class="flex items-center">
+                                  <span v-if="product.editing">
+                                    <div class="relative rounded-md shadow-sm">
+                                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">$</span>
+                                      </div>
+                                      <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        min="0.01" 
+                                        v-model="product.newPrice"
+                                        class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-7 pr-3 py-1 sm:text-sm border-gray-300 rounded-md"
+                                      >
                                     </div>
-                                    <input 
-                                      type="number" 
-                                      step="0.01" 
-                                      min="0.01" 
-                                      v-model="product.newPrice"
-                                      class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-7 pr-3 py-1 sm:text-sm border-gray-300 rounded-md"
-                                    >
-                                  </div>
-                                </span>
-                                <span v-else>${{ typeof product.price === 'number' ? product.price.toFixed(2) : Number(product.price).toFixed(2) }}</span>
-                              </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {{ product.current_stock || 'Not set' }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                              <button 
-                                v-if="product.editing"
-                                @click="updateProductPrice(product)"
-                                class="text-primary-600 hover:text-primary-900"
-                              >
-                                Save
-                              </button>
-                              <button 
-                                v-else
-                                @click="editProductPrice(product)"
-                                class="text-primary-600 hover:text-primary-900"
-                              >
-                                Edit
-                              </button>
-                              <button 
-                                @click="removeProductFromMachine(product)"
-                                class="text-red-600 hover:text-red-900"
-                              >
-                                Remove
-                              </button>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                                  </span>
+                                  <span v-else>${{ typeof product.price === 'number' ? product.price.toFixed(2) : Number(product.price).toFixed(2) }}</span>
+                                </div>
+                              </td>
+                              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ product.current_stock || 'Not set' }}
+                              </td>
+                              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                <button 
+                                  v-if="product.editing"
+                                  @click="updateProductPrice(product)"
+                                  class="text-primary-600 hover:text-primary-900"
+                                >
+                                  Save
+                                </button>
+                                <button 
+                                  v-else
+                                  @click="editProductPrice(product)"
+                                  class="text-primary-600 hover:text-primary-900"
+                                >
+                                  Edit
+                                </button>
+                                <button 
+                                  @click="removeProductFromMachine(product)"
+                                  class="text-red-600 hover:text-red-900"
+                                >
+                                  Remove
+                                </button>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
                   

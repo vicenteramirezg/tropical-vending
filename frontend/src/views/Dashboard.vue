@@ -3,14 +3,14 @@
     <h1 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
     
     <!-- Filter Controls -->
-    <div class="bg-white p-5 shadow-lg rounded-xl mb-6">
-      <div class="flex flex-wrap items-center gap-4">
-        <div>
+    <div class="bg-white p-4 sm:p-5 shadow-lg rounded-xl mb-6">
+      <div class="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-4">
+        <div class="w-full sm:w-auto">
           <label for="timeRange" class="block text-sm font-medium text-gray-700 mb-1">Time Period</label>
           <select
             id="timeRange"
             v-model="filters.timeRange"
-            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            class="block w-full sm:w-48 border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
             @change="applyFilters"
           >
             <option value="today">Today</option>
@@ -21,12 +21,12 @@
           </select>
         </div>
         
-        <div>
+        <div class="w-full sm:w-auto">
           <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
           <select
             id="location"
             v-model="filters.location"
-            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            class="block w-full sm:w-48 border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
             @change="applyFilters"
           >
             <option value="">All Locations</option>
@@ -36,12 +36,12 @@
           </select>
         </div>
         
-        <div>
+        <div class="w-full sm:w-auto">
           <label for="machineType" class="block text-sm font-medium text-gray-700 mb-1">Machine Type</label>
           <select
             id="machineType"
             v-model="filters.machineType"
-            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            class="block w-full sm:w-48 border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
             @change="applyFilters"
           >
             <option value="">All Types</option>
@@ -51,11 +51,11 @@
           </select>
         </div>
         
-        <div class="self-end ml-auto mt-4">
+        <div class="w-full sm:w-auto mt-2 sm:mt-0">
           <button
             type="button"
             @click="applyFilters"
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
+            class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -72,39 +72,39 @@
     
     <div v-else>
       <!-- KPI Cards -->
-      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div class="grid grid-cols-1 gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
         <div class="bg-gradient-to-br from-white to-gray-50 overflow-hidden shadow-lg rounded-xl transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-          <div class="px-4 py-6 sm:p-6">
+          <div class="px-4 py-5 sm:p-6">
             <dl>
               <dt class="text-sm font-medium text-gray-500 truncate">Total Locations</dt>
-              <dd class="mt-2 text-3xl font-bold text-primary-600">{{ data.locations }}</dd>
+              <dd class="mt-2 text-2xl sm:text-3xl font-bold text-primary-600">{{ data.locations }}</dd>
             </dl>
           </div>
         </div>
         
         <div class="bg-gradient-to-br from-white to-gray-50 overflow-hidden shadow-lg rounded-xl transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-          <div class="px-4 py-6 sm:p-6">
+          <div class="px-4 py-5 sm:p-6">
             <dl>
               <dt class="text-sm font-medium text-gray-500 truncate">Total Machines</dt>
-              <dd class="mt-2 text-3xl font-bold text-primary-600">{{ data.machines }}</dd>
+              <dd class="mt-2 text-2xl sm:text-3xl font-bold text-primary-600">{{ data.machines }}</dd>
             </dl>
           </div>
         </div>
         
         <div class="bg-gradient-to-br from-white to-gray-50 overflow-hidden shadow-lg rounded-xl transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-          <div class="px-4 py-6 sm:p-6">
+          <div class="px-4 py-5 sm:p-6">
             <dl>
               <dt class="text-sm font-medium text-gray-500 truncate">Total Products</dt>
-              <dd class="mt-2 text-3xl font-bold text-primary-600">{{ data.products }}</dd>
+              <dd class="mt-2 text-2xl sm:text-3xl font-bold text-primary-600">{{ data.products }}</dd>
             </dl>
           </div>
         </div>
         
         <div class="bg-gradient-to-br from-white to-gray-50 overflow-hidden shadow-lg rounded-xl transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-          <div class="px-4 py-6 sm:p-6">
+          <div class="px-4 py-5 sm:p-6">
             <dl>
               <dt class="text-sm font-medium text-gray-500 truncate">Recent Restocks</dt>
-              <dd class="mt-2 text-3xl font-bold text-primary-600">{{ data.recent_restocks }}</dd>
+              <dd class="mt-2 text-2xl sm:text-3xl font-bold text-primary-600">{{ data.recent_restocks }}</dd>
             </dl>
           </div>
         </div>

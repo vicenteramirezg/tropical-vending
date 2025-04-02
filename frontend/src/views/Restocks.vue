@@ -141,26 +141,90 @@
                               </div>
                               <div class="col-span-1">
                                 <label class="block text-xs text-gray-500">Current Stock</label>
-                                <input 
-                                  type="number" 
-                                  v-model="product.stock_before"
-                                  min="0"
-                                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                                  required
-                                >
+                                <div class="mt-1 flex rounded-md shadow-sm">
+                                  <button 
+                                    type="button"
+                                    @click="product.stock_before = Math.max(0, (parseInt(product.stock_before) || 0) - 1)"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                                  >
+                                    <span class="sr-only">Decrease</span>
+                                    -
+                                  </button>
+                                  <input 
+                                    type="number" 
+                                    v-model="product.stock_before"
+                                    min="0"
+                                    class="focus:ring-primary-500 focus:border-primary-500 block w-full border-gray-300 rounded-none text-center sm:text-sm"
+                                    required
+                                  >
+                                  <button 
+                                    type="button"
+                                    @click="product.stock_before = (parseInt(product.stock_before) || 0) + 1"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                                  >
+                                    <span class="sr-only">Increase</span>
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+                              <div class="col-span-1">
+                                <label class="block text-xs text-gray-500">Discarded Amount</label>
+                                <div class="mt-1 flex rounded-md shadow-sm">
+                                  <button 
+                                    type="button"
+                                    @click="product.discarded = Math.max(0, (parseInt(product.discarded) || 0) - 1)"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                                  >
+                                    <span class="sr-only">Decrease</span>
+                                    -
+                                  </button>
+                                  <input 
+                                    type="number" 
+                                    v-model="product.discarded"
+                                    min="0"
+                                    class="focus:ring-primary-500 focus:border-primary-500 block w-full border-gray-300 rounded-none text-center sm:text-sm"
+                                    required
+                                  >
+                                  <button 
+                                    type="button"
+                                    @click="product.discarded = (parseInt(product.discarded) || 0) + 1"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                                  >
+                                    <span class="sr-only">Increase</span>
+                                    +
+                                  </button>
+                                </div>
                               </div>
                               <div class="col-span-1">
                                 <label class="block text-xs text-gray-500">Restock Amount</label>
-                                <input 
-                                  type="number" 
-                                  v-model="product.restocked"
-                                  min="0"
-                                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                                  required
-                                >
+                                <div class="mt-1 flex rounded-md shadow-sm">
+                                  <button 
+                                    type="button"
+                                    @click="product.restocked = Math.max(0, (parseInt(product.restocked) || 0) - 1)"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                                  >
+                                    <span class="sr-only">Decrease</span>
+                                    -
+                                  </button>
+                                  <input 
+                                    type="number" 
+                                    v-model="product.restocked"
+                                    min="0"
+                                    class="focus:ring-primary-500 focus:border-primary-500 block w-full border-gray-300 rounded-none text-center sm:text-sm"
+                                    required
+                                  >
+                                  <button 
+                                    type="button"
+                                    @click="product.restocked = (parseInt(product.restocked) || 0) + 1"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                                  >
+                                    <span class="sr-only">Increase</span>
+                                    +
+                                  </button>
+                                </div>
                               </div>
                               <div class="col-span-1 text-sm text-gray-500">
-                                New Total: {{ (parseInt(product.stock_before) || 0) + (parseInt(product.restocked) || 0) }}
+                                New Total: {{ (parseInt(product.stock_before) || 0) - (parseInt(product.discarded) || 0) + (parseInt(product.restocked) || 0) }}
                               </div>
                             </div>
                           </div>
@@ -244,6 +308,7 @@
                         <div class="grid grid-cols-5 gap-2">
                           <div class="col-span-2">Product</div>
                           <div class="col-span-1 text-center">Prev Qty</div>
+                          <div class="col-span-1 text-center">Discarded</div>
                           <div class="col-span-1 text-center">Added</div>
                           <div class="col-span-1 text-center">New Qty</div>
                         </div>
@@ -260,6 +325,9 @@
                             </div>
                             <div class="col-span-1 text-center text-sm text-gray-500">
                               {{ entry.previous_quantity }}
+                            </div>
+                            <div class="col-span-1 text-center text-sm text-gray-500">
+                              {{ entry.quantity_discarded }}
                             </div>
                             <div class="col-span-1 text-center text-sm text-green-600 font-medium">
                               +{{ entry.quantity_added }}
@@ -383,6 +451,7 @@ const fetchLocationMachines = async () => {
         price: item.price,
         current_stock: item.current_stock || 0,
         stock_before: item.current_stock || 0,
+        discarded: 0,
         restocked: 0
       }))
       
@@ -453,6 +522,7 @@ const editRestock = async (restock) => {
           
           if (productIndex !== -1) {
             machine.products[productIndex].stock_before = entry.stock_before
+            machine.products[productIndex].discarded = entry.discarded || 0
             machine.products[productIndex].restocked = entry.restocked
           }
         })
@@ -491,6 +561,7 @@ const viewDetails = async (restock) => {
         product_name: entry.product_name,
         product_id: entry.product,
         previous_quantity: entry.stock_before,
+        quantity_discarded: entry.discarded,
         quantity_added: entry.restocked,
         machine_info: entry.machine_info
       }))
@@ -604,6 +675,7 @@ const saveRestock = async () => {
               visit_machine_restock: visitMachineRestockId,
               product: product.id,
               stock_before: parseInt(product.stock_before) || 0,
+              discarded: parseInt(product.discarded) || 0,
               restocked: parseInt(product.restocked) || 0
             };
             
@@ -620,6 +692,7 @@ const saveRestock = async () => {
               visit_machine_restock: visitMachineRestockId,
               product: product.id,
               stock_before: parseInt(product.stock_before) || 0,
+              discarded: parseInt(product.discarded) || 0,
               restocked: parseInt(product.restocked) || 0
             };
             

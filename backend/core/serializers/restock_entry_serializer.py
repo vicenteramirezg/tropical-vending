@@ -10,7 +10,7 @@ class RestockEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = RestockEntry
         fields = ['id', 'visit_machine_restock', 'product', 'product_name', 
-                 'machine_info', 'visit_date', 'stock_before', 'restocked', 
+                 'machine_info', 'visit_date', 'stock_before', 'discarded', 'restocked', 
                  'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at', 'product_name', 'machine_info', 'visit_date']
     

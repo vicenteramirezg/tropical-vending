@@ -121,6 +121,12 @@ STATICFILES_DIRS = [
 ]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# Whitenoise settings
+WHITENOISE_ROOT = os.path.join(BASE_DIR, 'backend/staticfiles')
+WHITENOISE_INDEX_FILE = True
+WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_ALLOW_ALL_ORIGINS = True
+
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'backend/media')

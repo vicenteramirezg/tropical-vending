@@ -1,8 +1,9 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from django.views.static import serve
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -345,27 +346,24 @@ def direct_migrate_view(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Debug endpoints - placed before Vue routing to take priority
-    path('debug/', TemplateView.as_view(template_name='debug.html')),
-    path('emergency-debug/', direct_debug_view, name='emergency_debug'),
-    path('run-migrations/', direct_migrate_view, name='direct_migrations'),
-    path('api/debug/', csrf_exempt(debug_view), name='debug_api'),
-    path('api/direct-auth/', csrf_exempt(direct_auth_view), name='direct_auth'),
-    path('api/run-migrations/', migrate_view, name='run_migrations'),
-    # API endpoints
-    path('api/token/', csrf_exempt(TokenObtainPairView.as_view()), name='token_obtain_pair'),
-    path('api/token/refresh/', csrf_exempt(TokenRefreshView.as_view()), name='token_refresh'),
     path('api/', include('core.urls')),
-    # Serve Vue App
-    path('', TemplateView.as_view(template_name='index.html')),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/debug/', debug_view, name='debug'),
+    path('api/direct-auth/', direct_auth_view, name='direct_auth'),
+    path('api/migrate/', migrate_view, name='migrate'),
+    path('api/direct-debug/', direct_debug_view, name='direct_debug'),
+    path('api/direct-migrate/', direct_migrate_view, name='direct_migrate'),
+    
+    # Serve static files in production
+    re_path(r'^static/(?P<path>.*)$', serve, {
+        'document_root': settings.STATIC_ROOT,
+    }),
+    
+    # Catch-all route for Vue.js
+    re_path(r'^.*$', TemplateView.as_view(template_name='index.html')),
 ]
 
-# Add media files in development
+# Only serve media files in development
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    
-# Add this catch-all route at the end to handle Vue router paths
-urlpatterns += [
-    path('<path:path>', TemplateView.as_view(template_name='index.html')),
-] 
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

@@ -7,12 +7,18 @@ class Product(models.Model):
         ('Snack', 'Snack'),
     )
     
-    name = models.CharField(max_length=100)
-    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPES, default='Soda')
+    name = models.CharField(max_length=100, db_index=True)
+    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPES, default='Soda', db_index=True)
     unit_type = models.CharField(max_length=50, default='unit', blank=True)  # Made optional with default
     image_url = models.URLField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['name', 'product_type']),  # Composite index for common queries
+            models.Index(fields=['created_at']),  # For sorting by creation date
+        ]
 
     def __str__(self):
         return self.name

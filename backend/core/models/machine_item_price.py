@@ -13,7 +13,7 @@ class MachineItemPrice(models.Model):
     class Meta:
         unique_together = [
             ('machine', 'product'),
-            ('machine', 'slot')  # Ensure slot numbers are unique per machine
+            # ('machine', 'slot')  # Temporarily disabled - will be re-enabled in the future
         ]
         indexes = [
             models.Index(fields=['machine', 'product']),

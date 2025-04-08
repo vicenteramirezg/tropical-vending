@@ -135,11 +135,14 @@
                             <div v-if="machine.products.length === 0" class="text-sm text-gray-500 italic p-2 text-center">
                               No products in this machine
                             </div>
-                            <div v-for="product in machine.products" :key="product.id" class="grid grid-cols-4 gap-4 items-center">
-                              <div class="col-span-1 text-sm font-medium text-gray-900">
+                            <div v-for="product in machine.products" :key="product.id" class="grid grid-cols-12 gap-4 items-center">
+                              <div class="col-span-1 text-sm font-medium text-gray-900 text-center bg-gray-100 rounded-md py-1">
+                                {{ product.slot }}
+                              </div>
+                              <div class="col-span-3 text-sm font-medium text-gray-900">
                                 {{ product.name }}
                               </div>
-                              <div class="col-span-1">
+                              <div class="col-span-2">
                                 <label class="block text-xs text-gray-500">Current Stock</label>
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                   <button 
@@ -167,7 +170,7 @@
                                   </button>
                                 </div>
                               </div>
-                              <div class="col-span-1">
+                              <div class="col-span-2">
                                 <label class="block text-xs text-gray-500">Discarded Amount</label>
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                   <button 
@@ -195,7 +198,7 @@
                                   </button>
                                 </div>
                               </div>
-                              <div class="col-span-1">
+                              <div class="col-span-2">
                                 <label class="block text-xs text-gray-500">Restock Amount</label>
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                   <button 
@@ -223,7 +226,7 @@
                                   </button>
                                 </div>
                               </div>
-                              <div class="col-span-1 text-sm text-gray-500">
+                              <div class="col-span-2 text-sm text-gray-500">
                                 New Total: {{ (parseInt(product.stock_before) || 0) - (parseInt(product.discarded) || 0) + (parseInt(product.restocked) || 0) }}
                               </div>
                             </div>
@@ -305,8 +308,9 @@
                     <h4 class="text-sm font-medium text-gray-500">Restocked Items</h4>
                     <div class="mt-2 border border-gray-200 rounded-md overflow-hidden">
                       <div class="px-4 py-3 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <div class="grid grid-cols-5 gap-2">
-                          <div class="col-span-2">Product</div>
+                        <div class="grid grid-cols-6 gap-2">
+                          <div class="col-span-1 text-center">Slot</div>
+                          <div class="col-span-1">Product</div>
                           <div class="col-span-1 text-center">Prev Qty</div>
                           <div class="col-span-1 text-center">Discarded</div>
                           <div class="col-span-1 text-center">Added</div>
@@ -319,8 +323,11 @@
                           :key="entry.id" 
                           class="px-4 py-3"
                         >
-                          <div class="grid grid-cols-5 gap-2 items-center">
-                            <div class="col-span-2 text-sm font-medium text-gray-900">
+                          <div class="grid grid-cols-6 gap-2 items-center">
+                            <div class="col-span-1 text-center bg-gray-100 rounded-md py-1 text-sm font-medium text-gray-900">
+                              {{ entry.slot || '-' }}
+                            </div>
+                            <div class="col-span-1 text-sm font-medium text-gray-900">
                               {{ entry.product_name }}
                             </div>
                             <div class="col-span-1 text-center text-sm text-gray-500">
@@ -333,7 +340,7 @@
                               +{{ entry.quantity_added }}
                             </div>
                             <div class="col-span-1 text-center text-sm font-medium text-gray-900">
-                              {{ entry.previous_quantity + entry.quantity_added }}
+                              {{ entry.previous_quantity + entry.quantity_added - entry.quantity_discarded }}
                             </div>
                           </div>
                         </div>
@@ -445,15 +452,18 @@ const fetchLocationMachines = async () => {
     for (const machine of machines) {
       // Get products for this machine
       const itemsResponse = await api.getMachineItems({ machine: machine.id })
-      const products = itemsResponse.data.map(item => ({
-        id: item.product,
-        name: item.product_name,
-        price: item.price,
-        current_stock: item.current_stock || 0,
-        stock_before: item.current_stock || 0,
-        discarded: 0,
-        restocked: 0
-      }))
+      const products = itemsResponse.data
+        .map(item => ({
+          id: item.product,
+          name: item.product_name,
+          price: item.price,
+          slot: item.slot,
+          current_stock: item.current_stock || 0,
+          stock_before: item.current_stock || 0,
+          discarded: 0,
+          restocked: 0
+        }))
+        .sort((a, b) => a.slot - b.slot) // Sort products by slot number
       
       machinesWithProducts.push({
         ...machine,
@@ -546,24 +556,50 @@ const viewDetails = async (restock) => {
     const machineRestocks = machineRestocksResponse.data
     
     // Fetch entries for each machine restock
-    const entries = []
+    let allEntries = []
     
     for (const machineRestock of machineRestocks) {
       const entriesResponse = await api.getRestockEntries({ visit_machine_restock: machineRestock.id })
-      entries.push(...entriesResponse.data)
+      const entriesData = entriesResponse.data
+      
+      // Get machine item info to get the slot number for each product
+      const machineItemsResponse = await api.getMachineItems({ machine: machineRestock.machine })
+      const machineItems = machineItemsResponse.data
+      
+      // Add slot info to each entry
+      const entriesWithSlot = entriesData.map(entry => {
+        const matchingItem = machineItems.find(item => item.product === entry.product)
+        return {
+          ...entry,
+          slot: matchingItem ? matchingItem.slot : null
+        }
+      })
+      
+      allEntries.push(...entriesWithSlot)
     }
+    
+    // Sort entries by slot within each machine
+    allEntries.sort((a, b) => {
+      // If the machine is different, keep the machine grouping
+      if (a.visit_machine_restock !== b.visit_machine_restock) {
+        return 0
+      }
+      // If same machine, sort by slot
+      return (a.slot || 999) - (b.slot || 999)
+    })
     
     // Combine the data
     selectedRestock.value = {
       ...restock,
-      entries: entries.map(entry => ({
+      entries: allEntries.map(entry => ({
         id: entry.id,
         product_name: entry.product_name,
         product_id: entry.product,
         previous_quantity: entry.stock_before,
         quantity_discarded: entry.discarded,
         quantity_added: entry.restocked,
-        machine_info: entry.machine_info
+        machine_info: entry.machine_info,
+        slot: entry.slot
       }))
     }
     

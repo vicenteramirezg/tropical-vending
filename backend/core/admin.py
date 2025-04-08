@@ -23,9 +23,9 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(MachineItemPrice)
 class MachineItemPriceAdmin(admin.ModelAdmin):
-    list_display = ('product', 'machine', 'price', 'current_stock', 'profit_margin')
+    list_display = ('slot', 'product', 'machine', 'price', 'current_stock', 'profit_margin')
     list_filter = ('machine', 'product')
-    search_fields = ('product__name', 'machine__machine_type')
+    search_fields = ('product__name', 'machine__machine_type', 'slot')
 
 @admin.register(WholesalePurchase)
 class WholesalePurchaseAdmin(admin.ModelAdmin):

@@ -340,6 +340,21 @@
                   <!-- Add New Product Form -->
                   <div class="bg-gray-50 rounded-lg p-4 mb-4">
                     <h4 class="text-sm font-medium text-gray-700 mb-2">Add Product to Machine</h4>
+                    
+                    <!-- Error notification -->
+                    <div v-if="error" class="mb-4 bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg">
+                      <div class="flex">
+                        <div class="flex-shrink-0">
+                          <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                          </svg>
+                        </div>
+                        <div class="ml-3">
+                          <p class="text-sm text-red-700">{{ error }}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
                     <form @submit.prevent="addProductToMachine" class="grid grid-cols-1 gap-y-3 sm:grid-cols-12 sm:gap-x-3">
                       <div class="sm:col-span-6">
                         <label for="product" class="block text-xs font-medium text-gray-700">Product</label>
@@ -359,7 +374,19 @@
                           </option>
                         </select>
                       </div>
-                      <div class="sm:col-span-3">
+                      <div class="sm:col-span-2">
+                        <label for="slot" class="block text-xs font-medium text-gray-700">Slot #</label>
+                        <input 
+                          type="number" 
+                          id="slot" 
+                          min="1" 
+                          v-model="productForm.slot"
+                          placeholder="1"
+                          class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full py-2 px-3 sm:text-sm border-gray-300 rounded-md"
+                          required
+                        >
+                      </div>
+                      <div class="sm:col-span-2">
                         <label for="price" class="block text-xs font-medium text-gray-700">Price</label>
                         <div class="mt-1 relative rounded-md shadow-sm">
                           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -377,7 +404,7 @@
                           >
                         </div>
                       </div>
-                      <div class="sm:col-span-3 flex items-end">
+                      <div class="sm:col-span-2 flex items-end">
                         <button
                           type="submit"
                           class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
@@ -399,6 +426,9 @@
                                 Product
                               </th>
                               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Slot
+                              </th>
+                              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Price
                               </th>
                               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -413,6 +443,21 @@
                             <tr v-for="product in machineProducts" :key="product.id">
                               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {{ product.product_name }}
+                              </td>
+                              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div class="flex items-center">
+                                  <span v-if="product.editingSlot">
+                                    <div class="relative rounded-md shadow-sm">
+                                      <input 
+                                        type="number" 
+                                        min="1" 
+                                        v-model="product.newSlot"
+                                        class="focus:ring-primary-500 focus:border-primary-500 block w-full py-1 px-3 sm:text-sm border-gray-300 rounded-md"
+                                      >
+                                    </div>
+                                  </span>
+                                  <span v-else>{{ product.slot }}</span>
+                                </div>
                               </td>
                               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <div class="flex items-center">
@@ -438,18 +483,32 @@
                               </td>
                               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                                 <button 
+                                  v-if="product.editingSlot"
+                                  @click="updateProductSlot(product)"
+                                  class="text-primary-600 hover:text-primary-900"
+                                >
+                                  Save Slot
+                                </button>
+                                <button 
+                                  v-else
+                                  @click="editProductSlot(product)"
+                                  class="text-primary-600 hover:text-primary-900"
+                                >
+                                  Edit Slot
+                                </button>
+                                <button 
                                   v-if="product.editing"
                                   @click="updateProductPrice(product)"
                                   class="text-primary-600 hover:text-primary-900"
                                 >
-                                  Save
+                                  Save Price
                                 </button>
                                 <button 
                                   v-else
                                   @click="editProductPrice(product)"
                                   class="text-primary-600 hover:text-primary-900"
                                 >
-                                  Edit
+                                  Edit Price
                                 </button>
                                 <button 
                                   @click="removeProductFromMachine(product)"
@@ -607,7 +666,8 @@ const machineForm = ref({
 // Form for adding a new product
 const productForm = ref({
   product: '',
-  price: ''
+  price: '',
+  slot: ''
 })
 
 // Fetch all machines with filters
@@ -739,7 +799,7 @@ const manageProducts = async (machine) => {
   machineProducts.value = []
   selectedMachine.value = machine
   loadingProducts.value = true
-  productForm.value = { product: '', price: '' }
+  productForm.value = { product: '', price: '', slot: '' }
   
   try {
     // Fetch all products
@@ -756,7 +816,9 @@ const manageProducts = async (machine) => {
       machineProducts.value = filteredItems.map(item => ({
         ...item,
         editing: false,
+        editingSlot: false,
         newPrice: item.price,
+        newSlot: item.slot,
         price: typeof item.price === 'string' ? parseFloat(item.price) : item.price
       }))
     }
@@ -775,27 +837,32 @@ const closeProductsModal = () => {
   showProductsModal.value = false
   machineProducts.value = []
   selectedMachine.value = null
-  productForm.value = { product: '', price: '' }
+  productForm.value = { product: '', price: '', slot: '' }
+  error.value = null
 }
 
 // Add a new product to the machine
 const addProductToMachine = async () => {
   loadingProductOperation.value = true
+  error.value = null
   try {
     const machineId = selectedMachine.value.id
     const productId = parseInt(productForm.value.product)
     const productPrice = parseFloat(productForm.value.price)
+    const slotNumber = parseInt(productForm.value.slot)
     
     const data = {
       machine: machineId,
       product: productId,
-      price: productPrice
+      price: productPrice,
+      slot: slotNumber
     }
     
     await api.createMachineItem(data)
     
     productForm.value.product = ''
     productForm.value.price = ''
+    productForm.value.slot = ''
     
     const params = { machine: machineId }
     const machineItemsResponse = await api.getMachineItems(params)
@@ -805,7 +872,9 @@ const addProductToMachine = async () => {
     machineProducts.value = filteredItems.map(item => ({
       ...item,
       editing: false,
+      editingSlot: false,
       newPrice: item.price,
+      newSlot: item.slot,
       price: typeof item.price === 'string' ? parseFloat(item.price) : item.price
     }))
     
@@ -822,6 +891,58 @@ const addProductToMachine = async () => {
   }
 }
 
+// Edit a product slot
+const editProductSlot = (product) => {
+  product.editingSlot = true
+  product.newSlot = product.slot
+}
+
+// Update a product slot
+const updateProductSlot = async (product) => {
+  error.value = null
+  try {
+    const machineId = selectedMachine.value.id
+    await api.updateMachineItem(product.id, {
+      machine: machineId,
+      product: product.product,
+      price: product.price,
+      slot: parseInt(product.newSlot)
+    })
+    
+    product.slot = parseInt(product.newSlot)
+    product.editingSlot = false
+    
+    // Reload machine products with explicit filtering
+    console.log(`Reloading products after slot update for machine ID: ${machineId}`)
+    const params = { machine: machineId }
+    
+    const machineItemsResponse = await api.getMachineItems(params)
+    console.log(`Got response for machine ${machineId} after slot update:`, machineItemsResponse.data)
+    
+    // Ensure we only include items for this specific machine
+    const filteredItems = machineItemsResponse.data.filter(item => item.machine == machineId)
+    console.log(`Filtered ${machineItemsResponse.data.length} items to ${filteredItems.length} for machine ${machineId}`)
+    
+    machineProducts.value = filteredItems.map(item => ({
+      ...item,
+      editing: false,
+      editingSlot: false,
+      newPrice: item.price,
+      newSlot: item.slot,
+      price: typeof item.price === 'string' ? parseFloat(item.price) : item.price
+    }))
+  } catch (err) {
+    console.error('Error updating product slot:', err)
+    error.value = 'Failed to update product slot. Please try again.'
+    // Check for validation/uniqueness errors
+    if (err.response && err.response.data) {
+      if (err.response.data.non_field_errors) {
+        error.value = err.response.data.non_field_errors[0]
+      }
+    }
+  }
+}
+
 // Edit a product price
 const editProductPrice = (product) => {
   product.editing = true
@@ -830,12 +951,14 @@ const editProductPrice = (product) => {
 
 // Update a product price
 const updateProductPrice = async (product) => {
+  error.value = null
   try {
     const machineId = selectedMachine.value.id
     await api.updateMachineItem(product.id, {
       machine: machineId,
       product: product.product,
-      price: parseFloat(product.newPrice)
+      price: parseFloat(product.newPrice),
+      slot: product.slot
     })
     
     product.price = parseFloat(product.newPrice)
@@ -855,7 +978,9 @@ const updateProductPrice = async (product) => {
     machineProducts.value = filteredItems.map(item => ({
       ...item,
       editing: false,
+      editingSlot: false,
       newPrice: item.price,
+      newSlot: item.slot,
       price: typeof item.price === 'string' ? parseFloat(item.price) : item.price
     }))
   } catch (err) {
@@ -888,7 +1013,9 @@ const removeProductFromMachine = async (product) => {
     machineProducts.value = filteredItems.map(item => ({
       ...item,
       editing: false,
+      editingSlot: false,
       newPrice: item.price,
+      newSlot: item.slot,
       price: typeof item.price === 'string' ? parseFloat(item.price) : item.price
     }))
     

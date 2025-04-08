@@ -4,6 +4,6 @@ from core.serializers import MachineItemPriceSerializer
 
 
 class MachineItemPriceViewSet(viewsets.ModelViewSet):
-    queryset = MachineItemPrice.objects.all().order_by('machine__location__name', 'machine__machine_type', 'product__name')
+    queryset = MachineItemPrice.objects.all().order_by('machine__location__name', 'machine__machine_type', 'slot')
     serializer_class = MachineItemPriceSerializer
-    filterset_fields = ['machine', 'product'] 
+    filterset_fields = ['machine', 'product', 'slot'] 

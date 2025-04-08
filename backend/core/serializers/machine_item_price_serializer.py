@@ -10,7 +10,7 @@ class MachineItemPriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = MachineItemPrice
         fields = ['id', 'machine', 'machine_info', 'product', 'product_name', 
-                 'price', 'current_stock', 'profit_margin', 'created_at', 'updated_at']
+                 'price', 'slot', 'current_stock', 'profit_margin', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at', 'product_name', 'machine_info', 'profit_margin']
     
     def get_product_name(self, obj):

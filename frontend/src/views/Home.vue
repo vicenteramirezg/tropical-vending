@@ -248,7 +248,7 @@
           </p>
         </div>
         
-        <div class="mt-12 mx-auto max-w-5xl grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <div class="mt-12 mx-auto max-w-5xl">
           <div class="flex flex-col rounded-2xl bg-white shadow-lg transform transition-all duration-500 hover:shadow-xl animate-fade-in-left">
             <div class="flex-1 p-10">
               <h3 class="text-xl font-medium text-gray-900">Office Location</h3>
@@ -267,23 +267,7 @@
                   </svg>
                   <a href="mailto:ivan.munoz@tropicalvend.com" class="text-primary-600 hover:text-primary-500">ivan.munoz@tropicalvend.com</a>
                 </p>
-              </address>
-            </div>
-          </div>
-          
-          <div class="flex flex-col rounded-2xl bg-white shadow-lg transform transition-all duration-500 hover:shadow-xl animate-fade-in-right">
-            <div class="flex-1 p-10">
-              <h3 class="text-xl font-medium text-gray-900">Warehouse Location</h3>
-              <address class="mt-4 not-italic text-base text-gray-500">
-                <p class="mt-2">10845 NW 50th Street</p>
-                <p>Sunrise, FL 33351</p>
                 <p class="mt-4 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                  <a href="tel:3057739307" class="text-primary-600 hover:text-primary-500">305-773-9307</a>
-                </p>
-                <p class="mt-2 flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>

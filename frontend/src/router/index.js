@@ -58,17 +58,10 @@ const router = createRouter({
       ]
     },
     {
-      path: '/',
-      component: AuthLayout,
-      meta: { hideForAuth: true },
-      children: [
-        {
-          path: '/login',
-          name: 'login',
-          component: () => import('../views/auth/Login.vue'),
-          meta: { title: 'Login' }
-        }
-      ]
+      path: '/login',
+      name: 'login',
+      component: () => import('../views/auth/Login.vue'),
+      meta: { title: 'Login', hideForAuth: true }
     },
     {
       path: '/home',

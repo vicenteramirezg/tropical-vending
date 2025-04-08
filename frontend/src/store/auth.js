@@ -13,7 +13,8 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
     token: localStorage.getItem('token') || null,
-    refreshToken: localStorage.getItem('refreshToken') || null
+    refreshToken: localStorage.getItem('refreshToken') || null,
+    logoutRedirect: '/home' // Store the logout redirect path here
   }),
   
   getters: {
@@ -112,6 +113,9 @@ export const useAuthStore = defineStore('auth', {
       
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
+      
+      // Don't handle navigation here, let components handle it
+      return this.logoutRedirect
     }
   }
 }) 

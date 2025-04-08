@@ -14,7 +14,7 @@ const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         {
-          path: '',
+          path: 'dashboard',
           name: 'dashboard',
           component: () => import('../views/Dashboard.vue'),
           meta: { title: 'Dashboard' }
@@ -77,6 +77,11 @@ const router = createRouter({
       meta: { title: 'Home' }
     },
     {
+      // Redirect root to home
+      path: '/',
+      redirect: '/home'
+    },
+    {
       // Catch-all route for 404
       path: '/:pathMatch(.*)*',
       name: 'not-found',
@@ -97,7 +102,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isAuthenticated) {
     next({ name: 'login' })
   } else if (to.meta.hideForAuth && isAuthenticated) {
-    next({ name: 'dashboard' })
+    next({ path: '/dashboard' })
   } else {
     next()
   }

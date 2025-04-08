@@ -118,19 +118,8 @@
       </div>
     </main>
 
-    <footer class="bg-white py-4 border-t border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col items-center">
-          <img src="../assets/images/logo.png" alt="Tropical Vending Logo" class="h-8 w-auto mb-2" />
-          <p class="text-center text-gray-600 font-medium mb-1">
-            © {{ new Date().getFullYear() }} Tropical Vending
-          </p>
-          <p class="text-center text-gray-500 text-sm">
-            Made with <span class="text-yellow-500">💛</span> by <a href="https://garat.dev" target="_blank" class="text-primary-600 hover:text-primary-700">Garat.dev</a>
-          </p>
-        </div>
-      </div>
-    </footer>
+    <!-- Footer -->
+    <AppFooter />
   </div>
 </template>
 
@@ -138,6 +127,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store/auth'
+import AppFooter from '../components/AppFooter.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -145,7 +135,7 @@ const authStore = useAuthStore()
 const mobileMenuOpen = ref(false)
 
 const navigation = [
-  { name: 'Dashboard', href: '/', routeName: 'dashboard' },
+  { name: 'Dashboard', href: '/dashboard', routeName: 'dashboard' },
   { name: 'Locations', href: '/locations', routeName: 'locations' },
   { name: 'Machines', href: '/machines', routeName: 'machines' },
   { name: 'Products', href: '/products', routeName: 'products' },
@@ -163,8 +153,8 @@ const userName = computed(() => {
 })
 
 const logout = () => {
-  authStore.logout()
-  router.push('/login')
+  const redirectPath = authStore.logout()
+  router.push(redirectPath)
 }
 
 // Fetch user data if needed

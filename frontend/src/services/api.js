@@ -67,7 +67,7 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         // If refresh fails, route to login
         authStore.logout()
-        window.location.href = '/login'
+        window.location.href = '/home'
         return Promise.reject(refreshError)
       }
     }

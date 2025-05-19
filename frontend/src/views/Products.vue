@@ -56,7 +56,7 @@
         <li v-for="product in products" :key="product.id" class="px-4 sm:px-6 py-4 sm:py-5 hover:bg-gray-50 transition-colors duration-150">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="flex items-start sm:items-center">
-              <div class="flex-shrink-0 h-14 w-14 bg-gray-100 rounded-lg overflow-hidden shadow-sm">
+              <div class="relative flex-shrink-0 h-14 w-14 bg-gray-100 rounded-lg overflow-hidden shadow-sm">
                 <img 
                   v-if="product.image_url" 
                   :src="product.image_url" 
@@ -68,6 +68,10 @@
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
+                </div>
+                <!-- Inventory badge -->
+                <div class="absolute -top-2 -right-2 h-6 w-6 flex items-center justify-center bg-purple-500 text-white text-xs font-bold rounded-full shadow-md">
+                  {{ product.inventory_quantity || 0 }}
                 </div>
               </div>
               <div class="ml-4">
@@ -82,6 +86,12 @@
                   <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="product.product_type === 'Soda' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'">
                     {{ product.product_type }}
                   </span>
+                  <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    {{ product.inventory_quantity || 0 }} in stock
+                  </span>
                 </div>
               </div>
             </div>
@@ -94,6 +104,15 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 Edit
+              </button>
+              <button
+                @click="viewCostHistory(product)"
+                class="w-full sm:w-auto inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Cost History
               </button>
               <button
                 @click="confirmDelete(product)"
@@ -150,18 +169,32 @@
                         <option value="Snack">Snack</option>
                       </select>
                     </div>
-                    <div>
-                      <label for="cost_price" class="block text-sm font-medium text-gray-700">Cost ($)</label>
-                      <input 
-                        type="number" 
-                        name="cost_price" 
-                        id="cost_price" 
-                        v-model="productForm.cost_price"
-                        min="0"
-                        step="0.01"
-                        class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                        required
-                      >
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <label for="cost_price" class="block text-sm font-medium text-gray-700">Cost ($)</label>
+                        <input 
+                          type="number" 
+                          name="cost_price" 
+                          id="cost_price" 
+                          v-model="productForm.cost_price"
+                          min="0"
+                          step="0.01"
+                          class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                          required
+                        >
+                      </div>
+                      <div>
+                        <label for="inventory_quantity" class="block text-sm font-medium text-gray-700">Inventory</label>
+                        <input 
+                          type="number" 
+                          name="inventory_quantity" 
+                          id="inventory_quantity" 
+                          v-model="productForm.inventory_quantity"
+                          min="0"
+                          step="1"
+                          class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                        >
+                      </div>
                     </div>
                     <div>
                       <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
@@ -184,6 +217,20 @@
                         class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       >
                     </div>
+                    <div v-if="isEditing" class="mt-4 bg-gray-50 p-3 rounded-md">
+                      <h4 class="text-sm font-medium text-gray-700 mb-2">Additional Information:</h4>
+                      <div class="grid grid-cols-2 gap-2">
+                        <div>
+                          <span class="text-xs text-gray-500">Latest Unit Cost:</span>
+                          <p class="text-sm font-medium text-primary-600">${{ productForm.id ? (products.find(p => p.id === productForm.id)?.latest_cost || '0.00') : '0.00' }}</p>
+                        </div>
+                        <div>
+                          <span class="text-xs text-gray-500">Average Cost:</span>
+                          <p class="text-sm font-medium text-primary-600">${{ productForm.id ? (products.find(p => p.id === productForm.id)?.average_cost || '0.00') : '0.00' }}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
                     <div v-if="productForm.image_url" class="mt-3">
                       <h4 class="text-sm font-medium text-gray-700 mb-2">Image Preview:</h4>
                       <div class="h-32 w-32 rounded-lg overflow-hidden bg-gray-100 shadow-sm">
@@ -261,6 +308,108 @@
         </div>
       </div>
     </div>
+
+    <!-- Add Cost History Modal -->
+    <div v-if="showCostHistoryModal" class="fixed inset-0 overflow-y-auto z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="showCostHistoryModal = false"></div>
+        
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        
+        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                  Cost History for {{ selectedProduct?.name || 'Product' }}
+                </h3>
+                
+                <div class="mt-4">
+                  <div v-if="loadingCostHistory" class="flex justify-center py-10">
+                    <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-500"></div>
+                  </div>
+                  
+                  <div v-else-if="costHistoryError" class="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg shadow-sm">
+                    <div class="flex">
+                      <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                      <div class="ml-3">
+                        <p class="text-sm text-red-700">{{ costHistoryError }}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div v-else-if="costHistory.length === 0" class="py-8 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h3 class="text-base font-medium text-gray-900">No cost history found</h3>
+                    <p class="mt-1 text-sm text-gray-500">This product has no recorded cost history.</p>
+                  </div>
+                  
+                  <div v-else>
+                    <div class="overflow-x-auto">
+                      <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                          <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Cost</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                          </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                          <tr v-for="entry in costHistory" :key="entry.id">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {{ new Date(entry.date).toLocaleString(undefined, {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {{ entry.quantity }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              ${{ Number(entry.unit_cost).toFixed(2) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              ${{ Number(entry.total_cost).toFixed(2) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {{ entry.supplier }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                              {{ entry.purchase_notes }}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button 
+              type="button"
+              @click="showCostHistoryModal = false"
+              class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-150"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -277,6 +426,11 @@ const showModal = ref(false)
 const showDeleteModal = ref(false)
 const isEditing = ref(false)
 const productToDelete = ref(null)
+const showCostHistoryModal = ref(false)
+const costHistory = ref([])
+const loadingCostHistory = ref(false)
+const costHistoryError = ref(null)
+const selectedProduct = ref(null)
 
 // Form for creating/editing a product
 const productForm = ref({
@@ -285,6 +439,7 @@ const productForm = ref({
   product_type: 'Soda',
   description: '',
   cost_price: 0,
+  inventory_quantity: 0,
   image_url: ''
 })
 
@@ -329,6 +484,7 @@ const openAddModal = () => {
     product_type: 'Soda',
     description: '',
     cost_price: 0,
+    inventory_quantity: 0,
     image_url: ''
   }
   showModal.value = true
@@ -343,6 +499,7 @@ const editProduct = (product) => {
     product_type: product.product_type || 'Soda',
     description: product.description || '',
     cost_price: product.cost_price,
+    inventory_quantity: product.inventory_quantity || 0,
     image_url: product.image_url || ''
   }
   
@@ -389,6 +546,25 @@ const deleteProduct = async () => {
   } catch (err) {
     console.error('Error deleting product:', err)
     error.value = 'Failed to delete product. Please try again.'
+  }
+}
+
+// Function to view cost history
+const viewCostHistory = async (product) => {
+  selectedProduct.value = product
+  showCostHistoryModal.value = true
+  loadingCostHistory.value = true
+  costHistoryError.value = null
+  costHistory.value = []
+  
+  try {
+    const response = await api.getProductCostHistory(product.id)
+    costHistory.value = response.data
+  } catch (err) {
+    console.error('Error fetching cost history:', err)
+    costHistoryError.value = 'Failed to load cost history. Please try again later.'
+  } finally {
+    loadingCostHistory.value = false
   }
 }
 

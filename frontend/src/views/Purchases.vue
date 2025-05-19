@@ -57,6 +57,9 @@
                 <span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                   {{ purchase.supplier || "Unknown" }}
                 </span>
+                <span v-if="purchase.current_inventory" class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                  Inventory: {{ purchase.current_inventory }}
+                </span>
               </div>
               <div class="mt-1">
                 <p class="text-sm text-gray-500">
@@ -109,12 +112,13 @@
                         id="product"
                         name="product"
                         v-model="purchaseForm.product"
+                        @change="onProductChange"
                         class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
                         required
                       >
                         <option value="" disabled>Select a product</option>
                         <option v-for="product in products" :key="product.id" :value="product.id">
-                          {{ product.name }}
+                          {{ product.name }} ({{ product.inventory_quantity }} in stock)
                         </option>
                       </select>
                     </div>
@@ -188,11 +192,21 @@
                       ></textarea>
                     </div>
                     
-                    <div class="grid grid-cols-1 gap-4">
+                    <div class="grid grid-cols-2 gap-4">
                       <div class="bg-gray-50 p-3 rounded-md">
                         <div class="text-sm font-medium text-gray-700">Unit Cost:</div>
                         <div class="text-lg font-bold text-primary-600">
                           ${{ unitCost.toFixed(2) }} per unit
+                        </div>
+                      </div>
+                      
+                      <div v-if="selectedProduct" class="bg-gray-50 p-3 rounded-md">
+                        <div class="text-sm font-medium text-gray-700">Current Inventory:</div>
+                        <div class="text-lg font-bold text-primary-600">
+                          {{ selectedProduct.inventory_quantity || 0 }} units
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">
+                          After purchase: {{ calculateNewInventory() }} units
                         </div>
                       </div>
                     </div>
@@ -244,6 +258,9 @@
                   <p class="text-sm text-gray-500">
                     Are you sure you want to delete this purchase record? This action cannot be undone.
                   </p>
+                  <p v-if="purchaseToDelete" class="text-sm text-red-500 mt-2">
+                    Note: This will also reduce your inventory by {{ purchaseToDelete.quantity }} units.
+                  </p>
                 </div>
               </div>
             </div>
@@ -278,6 +295,7 @@ const purchases = ref([])
 const products = ref([])
 const loading = ref(true)
 const error = ref(null)
+const selectedProduct = ref(null)
 
 // Modal states
 const showModal = ref(false)
@@ -313,6 +331,26 @@ const unitCost = computed(() => {
   }
   return 0
 })
+
+// Calculate new inventory after purchase
+const calculateNewInventory = () => {
+  if (!selectedProduct.value) return 0
+  
+  const currentInventory = selectedProduct.value.inventory_quantity || 0
+  const purchaseQuantity = parseInt(purchaseForm.value.quantity) || 0
+  
+  if (isEditing.value) {
+    // Get the original purchase quantity if editing
+    const originalPurchase = purchases.value.find(p => p.id === purchaseForm.value.id)
+    const originalQuantity = originalPurchase ? parseInt(originalPurchase.quantity) || 0 : 0
+    
+    // Calculate the net change in inventory
+    return currentInventory + (purchaseQuantity - originalQuantity)
+  }
+  
+  // For new purchases, just add
+  return currentInventory + purchaseQuantity
+}
 
 // Format date for display
 const formatDate = (dateString) => {
@@ -361,9 +399,28 @@ const fetchProducts = async () => {
   }
 }
 
+// Handle product selection change
+const onProductChange = () => {
+  if (purchaseForm.value.product) {
+    selectedProduct.value = products.value.find(p => p.id == purchaseForm.value.product)
+    
+    // Pre-fill with latest cost if available
+    if (selectedProduct.value && selectedProduct.value.latest_cost) {
+      const latestCost = parseFloat(selectedProduct.value.latest_cost)
+      if (latestCost > 0) {
+        purchaseForm.value.total_cost = latestCost * purchaseForm.value.quantity
+        calculateUnitCost()
+      }
+    }
+  } else {
+    selectedProduct.value = null
+  }
+}
+
 // Open modal to add a new purchase
 const openAddModal = () => {
   isEditing.value = false
+  selectedProduct.value = null
   
   // Set default purchase date to today
   const today = new Date()
@@ -412,6 +469,11 @@ const editPurchase = (purchase) => {
     notes: purchase.notes || ''
   }
   
+  // Set selected product
+  if (purchase.product) {
+    selectedProduct.value = products.value.find(p => p.id == purchase.product)
+  }
+  
   // Calculate unit cost for display
   calculateUnitCost()
   
@@ -446,7 +508,8 @@ const savePurchase = async () => {
       purchase_date: dateWithTime,      // Also include purchase_date as the serializer expects it
       quantity: quantity,
       total_cost: totalCost,
-      notes: purchaseForm.value.notes || ''
+      notes: purchaseForm.value.notes || '',
+      cost_per_unit: unitCost.value  // Include the unit cost explicitly
     }
     
     console.log('Saving purchase with data:', purchaseData)
@@ -460,12 +523,14 @@ const savePurchase = async () => {
     
     console.log('Purchase saved successfully:', response.data)
     
-    // Get the updated product to see the new average cost
+    // Get the updated product to see the new inventory and cost
     const productResponse = await api.getProduct(purchaseForm.value.product)
-    console.log('Updated product cost:', productResponse.data.average_cost)
+    console.log('Updated product:', productResponse.data)
     
     showModal.value = false
-    await fetchPurchases()
+    
+    // Refresh data
+    await Promise.all([fetchPurchases(), fetchProducts()])
   } catch (err) {
     console.error('Error saving purchase:', err)
     if (err.response && err.response.data) {
@@ -490,7 +555,9 @@ const deletePurchase = async () => {
   try {
     await api.deletePurchase(purchaseToDelete.value.id)
     showDeleteModal.value = false
-    await fetchPurchases()
+    
+    // Refresh data
+    await Promise.all([fetchPurchases(), fetchProducts()])
   } catch (err) {
     console.error('Error deleting purchase:', err)
     error.value = 'Failed to delete purchase. Please try again.'

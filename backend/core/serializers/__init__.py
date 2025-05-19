@@ -6,4 +6,5 @@ from .wholesale_purchase_serializer import WholesalePurchaseSerializer
 from .visit_serializer import VisitSerializer
 from .visit_machine_restock_serializer import VisitMachineRestockSerializer
 from .restock_entry_serializer import RestockEntrySerializer
-from .user_serializer import UserSerializer, RegisterSerializer 
+from .user_serializer import UserSerializer, RegisterSerializer
+from .product_cost_serializer import ProductCostSerializer 

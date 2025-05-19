@@ -225,6 +225,10 @@ export const api = {
   },
   getRevenueProfitData(params = {}) {
     return apiClient.get('/analytics/revenue-profit/', { params })
+  },
+  
+  getProductCostHistory: async (productId) => {
+    return await apiClient.get(`/product-costs/?product=${productId}`);
   }
 }
 

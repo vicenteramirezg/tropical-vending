@@ -13,11 +13,11 @@ npm install || { echo -e "\033[31mnpm install failed!\033[0m"; exit 1; }
 npm run build || { echo -e "\033[31mFrontend build failed!\033[0m"; exit 1; }
 popd
 
-# Make sure we have the Vite output in the backend/static directory
-echo -e "\033[36mCopying Vite assets...\033[0m"
-if [ ! -d "backend/static/assets" ]; then
-    echo -e "\033[33mCreating assets directory...\033[0m"
-    mkdir -p backend/static/assets
+# Ensure the backend/static directory exists (Vite is configured to output directly here)
+echo -e "\033[36mChecking Vite build output...\033[0m"
+if [ ! -d "backend/static" ]; then
+    echo -e "\033[31mError: backend/static directory not found! Build may have failed.\033[0m"
+    exit 1
 fi
 
 # Copy and modify the Vite-generated index.html file to use Django template tags
@@ -27,10 +27,10 @@ if [ -f "backend/static/index.html" ]; then
     INDEX_CONTENT=$(cat backend/static/index.html)
     
     # Apply replacements (using sed compatible with macOS)
-    INDEX_CONTENT=$(echo "$INDEX_CONTENT" | sed 's|src="/static/assets/|src="{% static '\''assets/|g')
-    INDEX_CONTENT=$(echo "$INDEX_CONTENT" | sed 's|href="/static/assets/|href="{% static '\''assets/|g')
-    INDEX_CONTENT=$(echo "$INDEX_CONTENT" | sed 's|src="/static/\([^"]*\)"|src="{% static '\''\1'\'' %}"|g')
-    INDEX_CONTENT=$(echo "$INDEX_CONTENT" | sed 's|href="/static/\([^"]*\)"|href="{% static '\''\1'\'' %}"|g')
+    INDEX_CONTENT=$(echo "$INDEX_CONTENT" | sed 's|src="/assets/|src="{% static '\''assets/|g')
+    INDEX_CONTENT=$(echo "$INDEX_CONTENT" | sed 's|href="/assets/|href="{% static '\''assets/|g')
+    INDEX_CONTENT=$(echo "$INDEX_CONTENT" | sed 's|src="/\([^"]*\)"|src="{% static '\''\1'\'' %}"|g')
+    INDEX_CONTENT=$(echo "$INDEX_CONTENT" | sed 's|href="/\([^"]*\)"|href="{% static '\''\1'\'' %}"|g')
     INDEX_CONTENT=$(echo "$INDEX_CONTENT" | sed 's|\.js"|\.js'\'' %}"|g')
     INDEX_CONTENT=$(echo "$INDEX_CONTENT" | sed 's|\.css"|\.css'\'' %}"|g')
     INDEX_CONTENT="{% load static %}"$'\n'"$INDEX_CONTENT"
@@ -41,7 +41,8 @@ if [ -f "backend/static/index.html" ]; then
     # Write the modified content to the Django template
     echo "$INDEX_CONTENT" > backend/templates/index.html
 else
-    echo -e "\033[31mWarning: backend/static/index.html not found\033[0m"
+    echo -e "\033[31mError: backend/static/index.html not found! Build may have failed.\033[0m"
+    exit 1
 fi
 
 # Create a custom index.html file for Railway deployment troubleshooting
@@ -82,11 +83,25 @@ popd
 # Git operations
 echo -e "\033[36mCommitting and pushing changes...\033[0m"
 
+# Check git status before proceeding
+git status
+
+# Ask for confirmation
+read -p "Proceed with committing and pushing these changes? (y/n): " confirm
+if [[ $confirm != "y" && $confirm != "Y" ]]; then
+    echo -e "\033[33mDeployment aborted by user.\033[0m"
+    exit 0
+fi
+
 # Get commit message from parameter or use default
 COMMIT_MESSAGE=${1:-"Deployment update"}
 
 git add .
 git commit -m "$COMMIT_MESSAGE" || { echo -e "\033[31mGit commit failed!\033[0m"; exit 1; }
-git push origin main || { echo -e "\033[31mGit push failed!\033[0m"; exit 1; }
+git push origin main || { 
+    echo -e "\033[31mGit push failed! Attempting to pull latest changes first...\033[0m"
+    git pull origin main
+    git push origin main || { echo -e "\033[31mGit push still failed after pulling. Please resolve conflicts manually.\033[0m"; exit 1; }
+}
 
 echo -e "\033[32mDeployment completed successfully!\033[0m" 

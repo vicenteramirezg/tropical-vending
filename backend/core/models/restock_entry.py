@@ -18,36 +18,29 @@ class RestockEntry(models.Model):
         # Track if this is a new record (no ID yet) or an update
         is_new = self.pk is None
         
-        # If this is an update, get the old value to calculate the difference
-        if not is_new:
-            old_instance = RestockEntry.objects.get(pk=self.pk)
-            old_restocked = old_instance.restocked
+        # If this is an update, we'll skip inventory logic as it's handled in the viewset
+        # Only handle inventory for new entries
         
         # Call the parent save method
         super().save(*args, **kwargs)
         
-        # Update current stock in MachineItemPrice
-        machine = self.visit_machine_restock.machine
-        try:
-            machine_item = machine.item_prices.get(product=self.product)
-            machine_item.current_stock = self.stock_before - self.discarded + self.restocked
-            machine_item.save(update_fields=['current_stock', 'updated_at'])
-        except machine.item_prices.model.DoesNotExist:
-            # If the product doesn't exist in the machine yet, we don't update anything
-            pass
-        
-        # Update product warehouse inventory
-        # Only deduct inventory for new items, or the difference for updated items
-        try:
-            if is_new:
+        # Only perform these actions for new entries, not updates
+        if is_new:
+            # Update current stock in MachineItemPrice
+            machine = self.visit_machine_restock.machine
+            try:
+                machine_item = machine.item_prices.get(product=self.product)
+                machine_item.current_stock = self.stock_before - self.discarded + self.restocked
+                machine_item.save(update_fields=['current_stock', 'updated_at'])
+            except machine.item_prices.model.DoesNotExist:
+                # If the product doesn't exist in the machine yet, we don't update anything
+                pass
+            
+            # Update product warehouse inventory - only for new entries
+            try:
                 # For new entries, subtract the full restocked amount from inventory
                 self.product.update_inventory(-self.restocked)
-            else:
-                # For updates, only adjust for the difference in restocked amount
-                inventory_change = old_restocked - self.restocked
-                if inventory_change != 0:
-                    self.product.update_inventory(inventory_change)
-        except ValueError as e:
-            # Handle case where there's not enough inventory
-            # You might want to add custom error handling here
-            raise 
+            except ValueError as e:
+                # Handle case where there's not enough inventory
+                # You might want to add custom error handling here
+                raise 

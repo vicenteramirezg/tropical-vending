@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status
 from core.models import (
-    RestockEntry, MachineItemPrice, Product, Machine, Location
+    RestockEntry, MachineItemPrice, Product, Machine, Location, ProductCost
 )
 from django.db.models import Sum, F, FloatField, Avg, Count, Q
 from django.db.models.functions import Coalesce
@@ -166,10 +166,8 @@ class DemandAnalysisView(APIView):
                         product_id=data['product_id']
                     )
                     price = float(machine_item.price)
-                    cost = float(machine_item.product.average_cost)
                 except MachineItemPrice.DoesNotExist:
                     price = 0
-                    cost = 0
                 
                 # For each consecutive pair of restocks
                 for i in range(1, len(restocks)):
@@ -186,6 +184,9 @@ class DemandAnalysisView(APIView):
                     
                     # Only include positive sales (avoids data errors)
                     if units_sold >= 0:
+                        # Get the historical cost at the time of the second visit
+                        historical_cost = self.get_historical_cost(data['product_id'], curr['date'])
+                        
                         units_sold_total += units_sold
                         days_total += days_between
                         
@@ -204,8 +205,8 @@ class DemandAnalysisView(APIView):
                             'daily_demand': units_sold / days_between,
                             'price': price,
                             'revenue': units_sold * price,
-                            'profit_per_unit': price - cost,
-                            'profit': units_sold * (price - cost)
+                            'profit_per_unit': price - historical_cost,
+                            'profit': units_sold * (price - historical_cost)
                         })
                 
                 # Calculate overall statistics if we had valid data
@@ -227,10 +228,13 @@ class DemandAnalysisView(APIView):
                         if first_half > 0:
                             trend = ((second_half - first_half) / first_half) * 100
                     
+                    # Get the historical cost for the last restock date for overall calculation
+                    latest_historical_cost = self.get_historical_cost(data['product_id'], restocks[-1]['date'])
+                    
                     # Update product totals
                     product_totals[data['product_id']]['units_sold'] += units_sold_total
                     product_totals[data['product_id']]['revenue'] += units_sold_total * price
-                    product_totals[data['product_id']]['profit'] += units_sold_total * (price - cost)
+                    product_totals[data['product_id']]['profit'] += units_sold_total * (price - latest_historical_cost)
                     product_totals[data['product_id']]['trend'] = trend  # Simplification
         
         # Prepare product summary data
@@ -242,6 +246,28 @@ class DemandAnalysisView(APIView):
         demand_data['products'].sort(key=lambda x: x['units_sold'], reverse=True)
         
         return Response(demand_data)
+    
+    def get_historical_cost(self, product_id, date):
+        """
+        Get the most recent cost of a product at a specific date
+        """
+        try:
+            # Find the most recent cost record before or equal to the given date
+            cost_record = ProductCost.objects.filter(
+                product_id=product_id,
+                date__lte=date
+            ).order_by('-date').first()
+            
+            if cost_record:
+                return float(cost_record.unit_cost)
+            
+            # Fallback to the product's average cost if no historical record exists
+            product = Product.objects.get(id=product_id)
+            return float(product.average_cost) if product.average_cost else 0
+            
+        except Exception as e:
+            print(f"Error getting historical cost: {e}")
+            return 0
 
 
 class RevenueProfitView(APIView):
@@ -303,14 +329,16 @@ class RevenueProfitView(APIView):
                     product=entry.product
                 )
                 price = float(machine_item.price)
-                cost = float(entry.product.average_cost) if entry.product.average_cost else 0
+                
+                # Get historical cost at the time of this restock
+                historical_cost = self.get_historical_cost(entry.product.id, entry.visit_machine_restock.visit.visit_date)
             except MachineItemPrice.DoesNotExist:
                 price = 0
-                cost = 0
+                historical_cost = 0
             
             # Calculate revenue and profit for this entry
             entry_revenue = units_sold * price
-            entry_profit = units_sold * (price - cost)
+            entry_profit = units_sold * (price - historical_cost)
             
             # Add to totals
             total_revenue += entry_revenue
@@ -382,13 +410,15 @@ class RevenueProfitView(APIView):
                     product=entry.product
                 )
                 price = float(machine_item.price)
-                cost = float(entry.product.average_cost) if entry.product.average_cost else 0
+                
+                # Get historical cost at the time of this restock
+                historical_cost = self.get_historical_cost(entry.product.id, entry.visit_machine_restock.visit.visit_date)
             except MachineItemPrice.DoesNotExist:
                 price = 0
-                cost = 0
+                historical_cost = 0
             
             previous_revenue += units_sold * price
-            previous_profit += units_sold * (price - cost)
+            previous_profit += units_sold * (price - historical_cost)
         
         # Calculate change percentages
         revenue_change = 0
@@ -426,6 +456,28 @@ class RevenueProfitView(APIView):
         }
         
         return Response(data)
+    
+    def get_historical_cost(self, product_id, date):
+        """
+        Get the most recent cost of a product at a specific date
+        """
+        try:
+            # Find the most recent cost record before or equal to the given date
+            cost_record = ProductCost.objects.filter(
+                product_id=product_id,
+                date__lte=date
+            ).order_by('-date').first()
+            
+            if cost_record:
+                return float(cost_record.unit_cost)
+            
+            # Fallback to the product's average cost if no historical record exists
+            product = Product.objects.get(id=product_id)
+            return float(product.average_cost) if product.average_cost else 0
+            
+        except Exception as e:
+            print(f"Error getting historical cost: {e}")
+            return 0
 
 
 class DashboardView(APIView):
@@ -528,13 +580,15 @@ class DashboardView(APIView):
                     product=entry.product
                 )
                 price = float(machine_item.price)
-                cost = float(entry.product.average_cost) if entry.product.average_cost else 0
+                
+                # Get historical cost at the time of this restock
+                historical_cost = self.get_historical_cost(entry.product.id, entry.visit_machine_restock.visit.visit_date)
             except MachineItemPrice.DoesNotExist:
                 price = 0
-                cost = 0
+                historical_cost = 0
             
             entry_revenue = units_sold * price
-            entry_profit = units_sold * (price - cost)
+            entry_profit = units_sold * (price - historical_cost)
             
             revenue_total += entry_revenue
             profit_total += entry_profit
@@ -557,4 +611,26 @@ class DashboardView(APIView):
             'profit_margin': profit_margin,
         }
         
-        return Response(dashboard_data) 
+        return Response(dashboard_data)
+    
+    def get_historical_cost(self, product_id, date):
+        """
+        Get the most recent cost of a product at a specific date
+        """
+        try:
+            # Find the most recent cost record before or equal to the given date
+            cost_record = ProductCost.objects.filter(
+                product_id=product_id,
+                date__lte=date
+            ).order_by('-date').first()
+            
+            if cost_record:
+                return float(cost_record.unit_cost)
+            
+            # Fallback to the product's average cost if no historical record exists
+            product = Product.objects.get(id=product_id)
+            return float(product.average_cost) if product.average_cost else 0
+            
+        except Exception as e:
+            print(f"Error getting historical cost: {e}")
+            return 0 

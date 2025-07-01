@@ -290,6 +290,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { api } from '../services/api'
+import { getCurrentDateLocal, formatDate } from '../utils/dateUtils'
 
 const purchases = ref([])
 const products = ref([])
@@ -352,12 +353,7 @@ const calculateNewInventory = () => {
   return currentInventory + purchaseQuantity
 }
 
-// Format date for display
-const formatDate = (dateString) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return date.toLocaleDateString()
-}
+// formatDate is now imported from dateUtils
 
 // Fetch all purchases
 const fetchPurchases = async () => {
@@ -422,17 +418,11 @@ const openAddModal = () => {
   isEditing.value = false
   selectedProduct.value = null
   
-  // Set default purchase date to today
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  
   purchaseForm.value = {
     id: null,
     product: '',
     supplier: '',
-    purchase_date: `${year}-${month}-${day}`,
+    purchase_date: getCurrentDateLocal(),
     quantity: 1,
     total_cost: 0,
     notes: ''
@@ -455,8 +445,7 @@ const editPurchase = (purchase) => {
   
   // If no valid date is found, use today
   if (!formattedDate) {
-    const today = new Date()
-    formattedDate = today.toISOString().split('T')[0]
+    formattedDate = getCurrentDateLocal()
   }
   
   purchaseForm.value = {
@@ -497,7 +486,7 @@ const savePurchase = async () => {
       return
     }
     
-    // Format the date properly with time component
+    // Format the date properly with time component (noon in New York timezone)
     const dateWithTime = `${purchaseForm.value.purchase_date}T12:00:00`
     
     // Prepare data for API

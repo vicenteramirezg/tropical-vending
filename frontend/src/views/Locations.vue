@@ -13,6 +13,36 @@
       </button>
     </div>
     
+    <!-- Route Filter -->
+    <div class="bg-white p-5 shadow-lg rounded-xl mb-6">
+      <div class="flex flex-wrap items-center gap-4">
+        <div>
+          <label for="routeFilter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Route</label>
+          <select
+            id="routeFilter"
+            v-model="selectedRoute"
+            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            @change="applyRouteFilter"
+          >
+            <option value="">All Routes</option>
+            <option value="unassigned">Unassigned</option>
+            <option v-for="route in availableRoutes" :key="route" :value="route">
+              {{ route }}
+            </option>
+          </select>
+        </div>
+        <div class="self-end">
+          <button
+            type="button"
+            @click="clearRouteFilter"
+            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
+          >
+            Clear Filter
+          </button>
+        </div>
+      </div>
+    </div>
+    
     <div v-if="loading" class="flex justify-center py-20">
       <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
     </div>
@@ -65,6 +95,14 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   {{ location.address }}
+                </span>
+              </p>
+              <p v-if="location.route" class="text-sm text-primary-600 mt-1">
+                <span class="inline-flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                  Route: {{ location.route }}
                 </span>
               </p>
               <!-- Machine counts -->
@@ -152,6 +190,18 @@
                         required
                       ></textarea>
                     </div>
+                    <div>
+                      <label for="route" class="block text-sm font-medium text-gray-700">Route</label>
+                      <input 
+                        type="text" 
+                        name="route" 
+                        id="route" 
+                        v-model="locationForm.route"
+                        placeholder="e.g. Route A, Downtown, etc."
+                        class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      >
+                      <p class="mt-1 text-xs text-gray-500">Optional: Assign this location to a route for restocking planning</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -231,9 +281,12 @@ import { ref, onMounted, computed } from 'vue'
 import { api } from '../services/api'
 
 const locations = ref([])
+const allLocations = ref([]) // Store all locations for filtering
 const machines = ref([])
 const loading = ref(true)
 const error = ref(null)
+const selectedRoute = ref('')
+const availableRoutes = ref([])
 
 // Machine type colors for badges
 const machineTypeColors = {
@@ -280,7 +333,8 @@ const locationToDelete = ref(null)
 const locationForm = ref({
   id: null,
   name: '',
-  address: ''
+  address: '',
+  route: ''
 })
 
 // Fetch all locations
@@ -288,10 +342,11 @@ const fetchLocations = async () => {
   loading.value = true
   try {
     const response = await api.getLocations()
+    allLocations.value = response.data
     locations.value = response.data
     
-    // After locations are loaded, fetch machines
-    await fetchMachines()
+    // After locations are loaded, fetch machines and routes
+    await Promise.all([fetchMachines(), fetchRoutes()])
   } catch (err) {
     console.error('Error fetching locations:', err)
     error.value = 'Failed to load locations. Please try again later.'
@@ -316,7 +371,8 @@ const openAddModal = () => {
   locationForm.value = {
     id: null,
     name: '',
-    address: ''
+    address: '',
+    route: ''
   }
   showModal.value = true
 }
@@ -327,7 +383,8 @@ const editLocation = (location) => {
   locationForm.value = {
     id: location.id,
     name: location.name,
-    address: location.address
+    address: location.address,
+    route: location.route || ''
   }
   showModal.value = true
 }
@@ -343,6 +400,8 @@ const saveLocation = async () => {
     
     showModal.value = false
     await fetchLocations()
+    // Clear any active filters to show the updated location
+    clearRouteFilter()
   } catch (err) {
     console.error('Error saving location:', err)
     error.value = 'Failed to save location. Please try again.'
@@ -363,10 +422,39 @@ const deleteLocation = async () => {
     await api.deleteLocation(locationToDelete.value.id)
     showDeleteModal.value = false
     await fetchLocations()
+    // Clear any active filters after deletion
+    clearRouteFilter()
   } catch (err) {
     console.error('Error deleting location:', err)
     error.value = 'Failed to delete location. Please try again.'
   }
+}
+
+// Fetch available routes
+const fetchRoutes = async () => {
+  try {
+    const response = await api.getRoutes()
+    availableRoutes.value = response.data.routes
+  } catch (err) {
+    console.error('Error fetching routes:', err)
+  }
+}
+
+// Apply route filter
+const applyRouteFilter = () => {
+  if (!selectedRoute.value) {
+    locations.value = allLocations.value
+  } else if (selectedRoute.value === 'unassigned') {
+    locations.value = allLocations.value.filter(location => !location.route)
+  } else {
+    locations.value = allLocations.value.filter(location => location.route === selectedRoute.value)
+  }
+}
+
+// Clear route filter
+const clearRouteFilter = () => {
+  selectedRoute.value = ''
+  locations.value = allLocations.value
 }
 
 // Open Google Maps for location

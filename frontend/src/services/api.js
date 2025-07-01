@@ -93,6 +93,9 @@ export const api = {
   deleteLocation(id) {
     return apiClient.delete(`/locations/${id}/`)
   },
+  getRoutes() {
+    return apiClient.get('/locations/routes/')
+  },
   
   // Machine endpoints
   getMachines(params = {}) {

@@ -472,13 +472,7 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                           <tr v-for="entry in costHistory" :key="entry.id">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {{ new Date(entry.date).toLocaleString(undefined, {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              }) }}
+                              {{ formatDate(entry.date) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {{ entry.quantity }}
@@ -522,6 +516,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { api, getImageUrl } from '../services/api'
+import { formatDate } from '../utils/dateUtils'
 
 const products = ref([])
 const loading = ref(true)

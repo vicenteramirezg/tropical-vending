@@ -426,6 +426,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { api } from '../services/api'
 import { useAuthStore } from '../store/auth'
+import { getCurrentDateTimeLocal, formatDate } from '../utils/dateUtils'
 
 // Add auth store reference
 const authStore = useAuthStore()
@@ -454,12 +455,7 @@ const restockForm = ref({
   machines: []
 })
 
-// Format date for display
-const formatDate = (dateString) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return date.toLocaleString()
-}
+// formatDate is now imported from dateUtils
 
 // Fetch all visits (formerly restocks)
 const fetchRestocks = async () => {
@@ -544,7 +540,7 @@ const openAddModal = () => {
   locationMachines.value = []
   restockForm.value = {
     id: null,
-    visit_date: new Date().toISOString().slice(0, 16),
+    visit_date: getCurrentDateTimeLocal(),
     notes: '',
     location: '',
     machines: []

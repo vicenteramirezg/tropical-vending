@@ -364,6 +364,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { api } from '../services/api'
+import { getCurrentDateLocal, formatDateShort } from '../utils/dateUtils'
 
 const loading = ref(true)
 const error = ref(null)
@@ -427,16 +428,7 @@ const formatTrend = (trend) => {
   return `${trend >= 0 ? '+' : ''}${trend.toFixed(1)}%`
 }
 
-// Format date for compact display (MM/DD/YYYY)
-const formatDateShort = (dateString) => {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { 
-    month: 'numeric', 
-    day: 'numeric', 
-    year: 'numeric' 
-  })
-}
+// formatDateShort is now imported from dateUtils
 
 // Format daily demand with 1 decimal place
 const formatDailyDemand = (demand) => {
@@ -598,16 +590,17 @@ const applyFilters = async () => {
   try {
     // Set default date range if custom is selected but dates are not
     if (filters.value.dateRange === 'custom' && (!filters.value.startDate || !filters.value.endDate)) {
-      const today = new Date()
-      const thirtyDaysAgo = new Date(today)
-      thirtyDaysAgo.setDate(today.getDate() - 30)
+      const today = getCurrentDateLocal()
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      const thirtyDaysAgoFormatted = thirtyDaysAgo.toLocaleDateString('en-CA', {timeZone: 'America/New_York'}) // YYYY-MM-DD format
       
       if (!filters.value.endDate) {
-        filters.value.endDate = today.toISOString().split('T')[0]
+        filters.value.endDate = today
       }
       
       if (!filters.value.startDate) {
-        filters.value.startDate = thirtyDaysAgo.toISOString().split('T')[0]
+        filters.value.startDate = thirtyDaysAgoFormatted
       }
     }
     

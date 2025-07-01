@@ -46,6 +46,22 @@
           </select>
         </div>
         
+        <div>
+          <label for="routeFilter" class="block text-sm font-medium text-gray-700 mb-1">Route</label>
+          <select
+            id="routeFilter"
+            v-model="filters.route"
+            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            @change="applyFilters"
+          >
+            <option value="">All Routes</option>
+            <option value="unassigned">Unassigned</option>
+            <option v-for="route in availableRoutes" :key="route" :value="route">
+              {{ route }}
+            </option>
+          </select>
+        </div>
+        
         <div class="self-end ml-auto mt-4">
           <button
             type="button"
@@ -137,6 +153,14 @@
                   </span>
                 </div>
                 <p v-if="machine.model" class="text-sm text-gray-500 mt-1">Model: {{ machine.model }}</p>
+                <p v-if="machine.route" class="text-sm text-primary-600 mt-1">
+                  <span class="inline-flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                    </svg>
+                    Route: {{ machine.route }}
+                  </span>
+                </p>
                 <p class="text-sm text-gray-500 mt-1">
                   <span v-if="machine.product_count" class="text-primary-600 font-medium">{{ machine.product_count }} products</span>
                   <span v-else class="text-gray-400 italic">No products</span>
@@ -571,8 +595,12 @@ const availableProducts = computed(() => {
 // Filter state
 const filters = ref({
   location: '',
-  machineType: ''
+  machineType: '',
+  route: ''
 })
+
+// Available routes for filtering
+const availableRoutes = ref([])
 
 // Group machines by location
 const groupedMachines = computed(() => {
@@ -682,6 +710,12 @@ const fetchMachines = async () => {
     if (filters.value.location) {
       params.location = filters.value.location
     }
+    if (filters.value.route) {
+      params.route = filters.value.route
+    }
+    if (filters.value.machineType) {
+      params.machine_type = filters.value.machineType
+    }
     
     const response = await api.getMachines(params)
     console.log('Machines fetched successfully:', response.data)
@@ -710,6 +744,16 @@ const fetchLocations = async () => {
     })
   } catch (err) {
     console.error('Error fetching locations:', err)
+  }
+}
+
+// Fetch available routes
+const fetchRoutes = async () => {
+  try {
+    const response = await api.getRoutes()
+    availableRoutes.value = response.data.routes
+  } catch (err) {
+    console.error('Error fetching routes:', err)
   }
 }
 
@@ -1030,7 +1074,7 @@ const removeProductFromMachine = async (product) => {
 // Initialize data on component mount
 onMounted(async () => {
   console.log('Machines component mounted - fetching data')
-  await fetchLocations()
+  await Promise.all([fetchLocations(), fetchRoutes()])
   await fetchMachines()
 })
 </script> 

@@ -25,7 +25,7 @@ export default defineConfig({
     manifest: true,
     cssCodeSplit: true,
   },
-  base: '/static/',
+  base: process.env.NODE_ENV === 'production' ? '/static/' : '/',
   server: {
     proxy: {
       '/api': {

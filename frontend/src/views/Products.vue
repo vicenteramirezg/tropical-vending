@@ -12,6 +12,83 @@
         Add Product
       </button>
     </div>
+
+    <!-- Search and Filter Section -->
+    <div class="mb-6">
+      <div class="flex flex-col sm:flex-row gap-4">
+        <!-- Search Input -->
+        <div class="flex-1 max-w-md">
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              v-model="searchQuery"
+              placeholder="Search products by name..."
+              class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+            >
+            <div v-if="searchQuery" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+              <button 
+                @click="clearSearch"
+                class="text-gray-400 hover:text-gray-600 focus:outline-none"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Type Filter -->
+        <div class="sm:w-48">
+          <div class="relative">
+            <select 
+              v-model="selectedProductType"
+              class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md bg-white"
+            >
+              <option value="">All Product Types</option>
+              <option value="Soda">Soda</option>
+              <option value="Snack">Snack</option>
+            </select>
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Clear Filters Button -->
+        <div v-if="searchQuery || selectedProductType" class="sm:w-auto">
+          <button
+            @click="clearAllFilters"
+            class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Clear Filters
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Results Summary -->
+      <div v-if="(searchQuery || selectedProductType) && filteredProducts.length !== products.length" class="mt-3 text-sm text-gray-600">
+        <div class="flex flex-wrap items-center gap-2">
+          <span>Showing {{ filteredProducts.length }} of {{ products.length }} products</span>
+          <span v-if="searchQuery" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            Name: "{{ searchQuery }}"
+          </span>
+          <span v-if="selectedProductType" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            Type: {{ selectedProductType }}
+          </span>
+        </div>
+      </div>
+    </div>
     
     <div v-if="loading" class="flex justify-center py-20">
       <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
@@ -27,6 +104,35 @@
         <div class="ml-3">
           <p class="text-sm text-red-700">{{ error }}</p>
         </div>
+      </div>
+    </div>
+    
+    <div v-else-if="filteredProducts.length === 0 && (searchQuery || selectedProductType)" class="bg-white shadow-lg rounded-xl overflow-hidden">
+      <div class="px-6 py-8 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-2">No products found</h3>
+        <div class="mt-2 max-w-xl text-sm text-gray-500 mx-auto mb-6">
+          <p>No products match your current filters.</p>
+          <div class="mt-2 flex flex-wrap justify-center gap-2">
+            <span v-if="searchQuery" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              Name: "{{ searchQuery }}"
+            </span>
+            <span v-if="selectedProductType" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              Type: {{ selectedProductType }}
+            </span>
+          </div>
+        </div>
+        <button
+          @click="clearAllFilters"
+          class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Clear All Filters
+        </button>
       </div>
     </div>
     
@@ -53,7 +159,7 @@
     
     <div v-else class="bg-white shadow-lg rounded-xl overflow-hidden">
       <ul role="list" class="divide-y divide-gray-200">
-        <li v-for="product in products" :key="product.id" class="px-4 sm:px-6 py-4 sm:py-5 hover:bg-gray-50 transition-colors duration-150">
+        <li v-for="product in filteredProducts" :key="product.id" class="px-4 sm:px-6 py-4 sm:py-5 hover:bg-gray-50 transition-colors duration-150">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="flex items-start sm:items-center">
               <div class="relative flex-shrink-0 h-14 w-14 bg-gray-100 rounded-lg overflow-hidden shadow-sm">
@@ -414,12 +520,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { api, getImageUrl } from '../services/api'
 
 const products = ref([])
 const loading = ref(true)
 const error = ref(null)
+const searchQuery = ref('')
+const selectedProductType = ref('')
 
 // Modal states
 const showModal = ref(false)
@@ -442,6 +550,39 @@ const productForm = ref({
   inventory_quantity: 0,
   image_url: ''
 })
+
+// Computed property for filtered products
+const filteredProducts = computed(() => {
+  let filtered = products.value
+
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    filtered = filtered.filter(product => 
+      product.name.toLowerCase().includes(query)
+    )
+  }
+
+  // Filter by product type
+  if (selectedProductType.value) {
+    filtered = filtered.filter(product => 
+      product.product_type === selectedProductType.value
+    )
+  }
+
+  return filtered
+})
+
+// Clear search function
+const clearSearch = () => {
+  searchQuery.value = ''
+}
+
+// Clear all filters function
+const clearAllFilters = () => {
+  searchQuery.value = ''
+  selectedProductType.value = ''
+}
 
 // Handle image loading error
 const handleImageError = (event, product) => {

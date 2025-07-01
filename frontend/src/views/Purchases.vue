@@ -509,7 +509,7 @@ const savePurchase = async () => {
       quantity: quantity,
       total_cost: totalCost,
       notes: purchaseForm.value.notes || '',
-      cost_per_unit: unitCost.value  // Include the unit cost explicitly
+      cost_per_unit: Math.round(unitCost.value * 100) / 100  // Round to 2 decimal places
     }
     
     console.log('Saving purchase with data:', purchaseData)
@@ -571,8 +571,8 @@ const calculateUnitCost = () => {
   
   // Avoid division by zero
   if (quantity > 0) {
-    // We're storing this in case the backend API expects it
-    purchaseForm.value.cost_per_unit = totalCost / quantity
+    // Round to 2 decimal places to match backend validation
+    purchaseForm.value.cost_per_unit = Math.round((totalCost / quantity) * 100) / 100
   } else {
     purchaseForm.value.cost_per_unit = 0
   }

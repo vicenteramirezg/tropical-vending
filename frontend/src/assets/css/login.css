@@ -1,0 +1,228 @@
+/* Login Page Styles */
+
+/* Return Home Link */
+.return-home-link {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgb(255 255 255);
+  font-weight: 500;
+  transition: all 0.3s ease;
+  transform: scale(1);
+}
+
+.return-home-link:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+/* Glass Card Effect */
+.glass-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  transition: all 0.5s ease;
+}
+
+.glass-card:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Error Alert */
+.error-alert {
+  background-color: rgba(239, 68, 68, 0.1);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: rgb(252 165 165);
+  padding: 1rem;
+  border-radius: 1rem;
+}
+
+/* Form Styles */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(209 213 219);
+  margin-bottom: 0.5rem;
+}
+
+.input-icon {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  padding-left: 1rem;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.form-input {
+  width: 100%;
+  padding-left: 3rem;
+  padding-right: 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  color: rgb(255 255 255);
+  transition: all 0.3s ease;
+}
+
+.form-input::placeholder {
+  color: rgb(156 163 175);
+}
+
+.form-input:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: rgb(147 51 234);
+  box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.5);
+  background-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 15px -3px rgba(147, 51, 234, 0.25);
+}
+
+/* Login Button */
+.login-button {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-radius: 1rem;
+  color: rgb(255 255 255);
+  font-weight: 600;
+  font-size: 1.125rem;
+  background: linear-gradient(to right, rgb(147 51 234), rgb(236 72 153));
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  transform: scale(1);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.login-button:hover:not(:disabled) {
+  background: linear-gradient(to right, rgb(126 34 206), rgb(219 39 119));
+  transform: scale(1.05);
+  box-shadow: 0 25px 50px -12px rgba(139, 92, 246, 0.25);
+}
+
+.login-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.5), 0 0 0 4px rgba(147, 51, 234, 0.25);
+}
+
+.login-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-button:disabled:hover {
+  transform: scale(1);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Animation Classes */
+.animate-fade-in-down {
+  opacity: 0;
+  transform: translateY(-2rem);
+  transition: all 1s ease;
+  animation: fade-in-down 0.8s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  opacity: 0;
+  transform: translateY(2rem);
+  transition: all 1s ease;
+  animation: fade-in-up 0.8s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+.animate-fade-in {
+  opacity: 0;
+  transition: all 1s ease;
+  animation: fade-in 0.8s ease-out forwards;
+  animation-delay: 0.4s;
+}
+
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* Keyframe Animations */
+@keyframes fade-in-down {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes shake {
+  10%, 90% {
+    transform: translateX(-2px);
+  }
+  20%, 80% {
+    transform: translateX(4px);
+  }
+  30%, 50%, 70% {
+    transform: translateX(-6px);
+  }
+  40%, 60% {
+    transform: translateX(6px);
+  }
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  .login-button:hover {
+    transform: scale(1);
+  }
+  
+  .glass-card:hover {
+    transform: scale(1);
+  }
+} 

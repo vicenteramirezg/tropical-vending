@@ -10,4 +10,4 @@ python manage.py migrate
 
 # Start development server
 Write-Host "Starting backend development server..."
-python manage.py runserver 
+python manage.py runserver 0.0.0.0:8000

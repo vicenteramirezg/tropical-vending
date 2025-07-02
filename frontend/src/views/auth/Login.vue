@@ -1,93 +1,112 @@
 <template>
-  <div class="min-h-screen flex flex-col justify-between bg-gradient-to-b from-gray-50 to-gray-100 relative overflow-hidden">
-    <!-- Background Pattern -->
-    <div class="absolute inset-0 z-0 opacity-10">
-      <div class="absolute inset-0 bg-grid-primary-700/20 bg-[size:20px_20px]"></div>
+  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <!-- Animated Background Elements -->
+    <div class="absolute inset-0 overflow-hidden">
+      <div class="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-full blur-3xl animate-pulse"></div>
+      <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-blue-500/30 to-cyan-500/30 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
+      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 4s;"></div>
+    </div>
+
+    <!-- Return to Home Link -->
+    <div class="absolute top-6 left-6 z-20">
+      <a href="/home" class="return-home-link group">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 transition-transform group-hover:-translate-x-1" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+        </svg>
+        <span class="font-medium">Return to Home</span>
+      </a>
     </div>
     
     <!-- Login Content -->
-    <div class="flex flex-col items-center justify-center flex-grow py-12 px-4 sm:px-6 lg:px-8 relative z-10">
-      <!-- Login Card -->
-      <div class="w-full max-w-xl space-y-6">
+    <div class="flex flex-col items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="w-full max-w-md space-y-8">
         <!-- Logo Section with Animation -->
-        <div class="flex flex-col items-center animate-fade-in-down">
-          <div class="bg-white rounded-full p-4 shadow-lg mb-6 transform transition-all duration-500 hover:shadow-xl hover:scale-105">
-            <img src="../../assets/images/logo.png" class="h-24 w-auto" alt="Tropical Vending Logo" />
+        <div class="text-center animate-fade-in-down">
+          <div class="relative inline-block">
+            <div class="absolute inset-0 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div class="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-full p-6 shadow-2xl transform transition-all duration-500 hover:scale-110 hover:shadow-purple-500/25 group">
+              <img src="../../assets/images/logo.png" class="h-20 w-auto" alt="Tropical Vending Logo" />
+            </div>
           </div>
+          <h1 class="mt-6 text-4xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+            Welcome Back
+          </h1>
+          <p class="mt-2 text-lg text-gray-400">
+            Sign in to your account
+          </p>
         </div>
         
         <!-- Login Form Card -->
-        <div class="bg-white p-8 sm:p-10 rounded-xl shadow-xl backdrop-blur-sm border border-gray-100 animate-fade-in-up">
-          <h2 class="text-3xl font-bold text-gray-900 text-center mb-1">Welcome Back</h2>
-          <p class="text-gray-600 text-center mb-8">Sign in to your account</p>
-          
-          <div v-if="error" class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6 animate-shake" role="alert">
-            <div class="flex">
+        <div class="glass-card p-8 space-y-6 animate-fade-in-up">
+          <!-- Error Alert -->
+          <div v-if="error" class="error-alert animate-shake" role="alert">
+            <div class="flex items-start">
               <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                 </svg>
               </div>
               <div class="ml-3">
-                <p class="text-sm">{{ error }}</p>
+                <p class="text-sm text-red-300">{{ error }}</p>
               </div>
             </div>
           </div>
 
           <form @submit.prevent="handleLogin" class="space-y-6">
-            <div class="space-y-5">
-              <div class="group">
-                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <input
-                    id="username"
-                    v-model="username"
-                    name="username"
-                    type="text"
-                    required
-                    class="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 sm:text-sm"
-                    placeholder="Enter your username"
-                  />
+            <!-- Username Field -->
+            <div class="form-group">
+              <label for="username" class="form-label">Username</label>
+              <div class="relative">
+                <div class="input-icon">
+                  <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                  </svg>
                 </div>
+                <input
+                  id="username"
+                  v-model="username"
+                  name="username"
+                  type="text"
+                  required
+                  class="form-input"
+                  placeholder="Enter your username"
+                />
               </div>
-              
-              <div class="group">
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <input
-                    id="password"
-                    v-model="password"
-                    name="password"
-                    type="password"
-                    required
-                    class="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 sm:text-sm"
-                    placeholder="Enter your password"
-                  />
+            </div>
+            
+            <!-- Password Field -->
+            <div class="form-group">
+              <label for="password" class="form-label">Password</label>
+              <div class="relative">
+                <div class="input-icon">
+                  <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                  </svg>
                 </div>
+                <input
+                  id="password"
+                  v-model="password"
+                  name="password"
+                  type="password"
+                  required
+                  class="form-input"
+                  placeholder="Enter your password"
+                />
               </div>
             </div>
 
+            <!-- Submit Button -->
             <div>
               <button
                 type="submit"
                 :disabled="loading"
-                class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 ease-in-out transform hover:translate-y-[-2px] disabled:opacity-50 disabled:hover:translate-y-0"
+                class="login-button group"
               >
-                <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                  <svg v-if="!loading" class="h-5 w-5 text-primary-400 group-hover:text-primary-300 transition-colors duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <span class="absolute left-0 inset-y-0 flex items-center pl-4">
+                  <svg v-if="!loading" class="h-5 w-5 text-white/80 group-hover:text-white transition-colors duration-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
                   </svg>
-                  <svg v-if="loading" class="animate-spin h-5 w-5 text-primary-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg v-if="loading" class="animate-spin h-5 w-5 text-white/80" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -98,25 +117,16 @@
           </form>
         </div>
         
-        <div class="text-center mt-8 animate-fade-in">
-          <p class="text-sm text-gray-600">Tropical Vending Management System</p>
+        <!-- Footer Text -->
+        <div class="text-center animate-fade-in">
+          <p class="text-sm text-gray-400">
+            Tropical Vending Management System
+          </p>
+          <p class="text-xs text-gray-500 mt-2">
+            Secure access to your vending operations
+          </p>
         </div>
       </div>
-    </div>
-    
-    <!-- Return to Home Link -->
-    <div class="absolute top-4 left-4 z-20">
-      <a href="/home" class="flex items-center text-primary-600 hover:text-primary-700 transition-colors duration-300">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-        </svg>
-        <span class="text-sm font-medium">Return to Home</span>
-      </a>
-    </div>
-    
-    <!-- Footer -->
-    <div class="relative z-10">
-      <AppFooter />
     </div>
   </div>
 </template>
@@ -125,7 +135,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../store/auth'
-import AppFooter from '../../components/AppFooter.vue'
+import '../../assets/css/login.css'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -161,76 +171,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.bg-grid-primary-700\/20 {
-  background-image: linear-gradient(to right, rgba(0, 69, 147, 0.1) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 69, 147, 0.1) 1px, transparent 1px);
-}
-
-/* Animation classes */
-.animate-fade-in-down {
-  animation: fade-in-down 0.7s ease-out forwards;
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 0.7s ease-out forwards;
-  animation-delay: 0.2s;
-  opacity: 0;
-}
-
-.animate-fade-in {
-  animation: fade-in 0.7s ease-out forwards;
-  animation-delay: 0.4s;
-  opacity: 0;
-}
-
-.animate-shake {
-  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-}
-
-@keyframes fade-in-down {
-  0% {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fade-in-up {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fade-in {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@keyframes shake {
-  10%, 90% {
-    transform: translateX(-1px);
-  }
-  20%, 80% {
-    transform: translateX(2px);
-  }
-  30%, 50%, 70% {
-    transform: translateX(-4px);
-  }
-  40%, 60% {
-    transform: translateX(4px);
-  }
-}
-</style> 
+ 

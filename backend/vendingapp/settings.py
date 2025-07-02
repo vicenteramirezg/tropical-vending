@@ -22,7 +22,8 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
     "localhost", 
     "127.0.0.1", 
     "tropical-vending-production.up.railway.app",
-    ".up.railway.app"
+    ".up.railway.app",
+    "10.1.60.107", "10.1.60.1", "172.21.48.1"
 ])
 
 # Application definition

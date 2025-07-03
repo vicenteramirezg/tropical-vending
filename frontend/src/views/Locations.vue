@@ -14,39 +14,19 @@
     </div>
     
     <!-- Route Filter -->
-    <div class="bg-white p-5 shadow-lg rounded-xl mb-6">
-      <div class="flex flex-wrap items-center gap-4">
-        <div>
-          <label for="routeFilter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Route</label>
-          <select
-            id="routeFilter"
-            v-model="selectedRoute"
-            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-            @change="applyRouteFilter"
-          >
-            <option value="">All Routes</option>
-            <option value="unassigned">Unassigned</option>
-            <option v-for="route in availableRoutes" :key="route" :value="route">
-              {{ route }}
-            </option>
-          </select>
-        </div>
-        <div class="self-end">
-          <button
-            type="button"
-            @click="clearRouteFilter"
-            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
-          >
-            Clear Filter
-          </button>
-        </div>
-      </div>
-    </div>
+    <RouteFilter
+      v-model:selectedRoute="selectedRoute"
+      :available-routes="availableRoutes"
+      @update:selectedRoute="applyRouteFilter"
+      @clear-filter="clearRouteFilter"
+    />
     
+    <!-- Loading State -->
     <div v-if="loading" class="flex justify-center py-20">
       <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
     </div>
     
+    <!-- Error State -->
     <div v-else-if="error" class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-r-lg shadow-sm">
       <div class="flex">
         <div class="flex-shrink-0">
@@ -60,415 +40,118 @@
       </div>
     </div>
     
-    <div v-else-if="locations.length === 0" class="bg-white shadow-lg rounded-xl overflow-hidden">
-      <div class="px-6 py-8 text-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-2">No locations found</h3>
-        <div class="mt-2 max-w-xl text-sm text-gray-500 mx-auto mb-6">
-          <p>Get started by adding your first location.</p>
-        </div>
-        <button
-          @click="openAddModal"
-          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Add Location
-        </button>
-      </div>
-    </div>
-    
-    <div v-else class="bg-white shadow-lg rounded-xl overflow-hidden">
-      <ul role="list" class="divide-y divide-gray-200">
-        <li v-for="location in locations" :key="location.id" class="px-4 sm:px-6 py-4 sm:py-5 hover:bg-gray-50 transition-colors duration-150">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <p class="text-sm font-medium text-primary-600">{{ location.name }}</p>
-              <p class="text-sm text-gray-500 mt-1">
-                <span class="inline-flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  {{ location.address }}
-                </span>
-              </p>
-              <p v-if="location.route" class="text-sm text-primary-600 mt-1">
-                <span class="inline-flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                  </svg>
-                  Route: {{ location.route }}
-                </span>
-              </p>
-              <!-- Machine counts -->
-              <div v-if="locationMachines[location.id]" class="mt-2 flex flex-wrap gap-2">
-                <span 
-                  v-for="(count, type) in locationMachines[location.id]" 
-                  :key="type"
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  :class="machineTypeColors[type] || 'bg-gray-100 text-gray-800'"
-                >
-                  {{ type }}: {{ count }}
-                </span>
-              </div>
-            </div>
-            <div class="flex flex-wrap gap-2 sm:flex-nowrap">
-              <button
-                @click="openMapForLocation(location)"
-                class="w-full sm:w-auto inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                View on Maps
-              </button>
-              <button
-                @click="editLocation(location)"
-                class="w-full sm:w-auto inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Edit
-              </button>
-              <button
-                @click="confirmDelete(location)"
-                class="w-full sm:w-auto inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-red-50 hover:text-red-700 hover:border-red-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                Delete
-              </button>
-            </div>
-          </div>
-        </li>
-      </ul>
-    </div>
+    <!-- Location List -->
+    <LocationList
+      v-else
+      :locations="locations"
+      :location-machines="locationMachines"
+      :machine-type-colors="machineTypeColors"
+      @add-location="openAddModal"
+      @view-on-map="openMapForLocation"
+      @edit-location="openEditModal"
+      @delete-location="openDeleteModal"
+    />
     
     <!-- Add/Edit Modal -->
-    <div v-if="showModal" class="fixed inset-0 overflow-y-auto z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="showModal = false"></div>
-        
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        
-        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <form @submit.prevent="saveLocation">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-              <div class="sm:flex sm:items-start">
-                <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                  <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                    {{ isEditing ? 'Edit Location' : 'Add New Location' }}
-                  </h3>
-                  <div class="mt-4 space-y-4">
-                    <div>
-                      <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                      <input 
-                        type="text" 
-                        name="name" 
-                        id="name" 
-                        v-model="locationForm.name"
-                        class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                        required
-                      >
-                    </div>
-                    <div>
-                      <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
-                      <textarea 
-                        id="address" 
-                        name="address" 
-                        rows="3" 
-                        v-model="locationForm.address"
-                        class="shadow-sm focus:ring-primary-500 focus:border-primary-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                        required
-                      ></textarea>
-                    </div>
-                    <div>
-                      <label for="route" class="block text-sm font-medium text-gray-700">Route</label>
-                      <input 
-                        type="text" 
-                        name="route" 
-                        id="route" 
-                        v-model="locationForm.route"
-                        placeholder="e.g. Route A, Downtown, etc."
-                        class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      >
-                      <p class="mt-1 text-xs text-gray-500">Optional: Assign this location to a route for restocking planning</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-              <button 
-                type="submit"
-                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-150"
-              >
-                {{ isEditing ? 'Update' : 'Add' }}
-              </button>
-              <button 
-                type="button"
-                @click="showModal = false"
-                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-150"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+    <LocationModal
+      :show="showModal"
+      :location="editingLocation"
+      @close="closeModal"
+      @save="saveLocation"
+    />
     
     <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteModal" class="fixed inset-0 overflow-y-auto z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="showDeleteModal = false"></div>
-        
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        
-        <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <div class="sm:flex sm:items-start">
-              <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                <!-- Warning icon -->
-                <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                  Delete Location
-                </h3>
-                <div class="mt-2">
-                  <p class="text-sm text-gray-500">
-                    Are you sure you want to delete <span class="font-medium">{{ locationToDelete?.name }}</span>? This action cannot be undone.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-            <button 
-              type="button"
-              @click="deleteLocation"
-              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-150"
-            >
-              Delete
-            </button>
-            <button 
-              type="button"
-              @click="showDeleteModal = false"
-              class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-150"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <DeleteConfirmationModal
+      :show="showDeleteModal"
+      :location="locationToDelete"
+      @close="closeDeleteModal"
+      @confirm="confirmDelete"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { api } from '../services/api'
+import { ref } from 'vue'
+import { useLocations } from '../composables/useLocations'
+import RouteFilter from '../components/locations/RouteFilter.vue'
+import LocationList from '../components/locations/LocationList.vue'
+import LocationModal from '../components/locations/LocationModal.vue'
+import DeleteConfirmationModal from '../components/locations/DeleteConfirmationModal.vue'
 
-const locations = ref([])
-const allLocations = ref([]) // Store all locations for filtering
-const machines = ref([])
-const loading = ref(true)
-const error = ref(null)
-const selectedRoute = ref('')
-const availableRoutes = ref([])
-
-// Machine type colors for badges
-const machineTypeColors = {
-  'Vending': 'bg-blue-100 text-blue-800',
-  'Coffee': 'bg-amber-100 text-amber-800',
-  'Snack': 'bg-green-100 text-green-800',
-  'Drink': 'bg-purple-100 text-purple-800'
-}
-
-// Computed property to organize machines by location
-const locationMachines = computed(() => {
-  const result = {}
-  
-  // Initialize all locations with empty objects
-  locations.value.forEach(location => {
-    result[location.id] = {}
-  })
-  
-  // Count machines by type for each location
-  machines.value.forEach(machine => {
-    if (machine.location) {
-      if (!result[machine.location]) {
-        result[machine.location] = {}
-      }
-      
-      if (!result[machine.location][machine.machine_type]) {
-        result[machine.location][machine.machine_type] = 0
-      }
-      
-      result[machine.location][machine.machine_type]++
-    }
-  })
-  
-  return result
-})
+// Use the locations composable
+const {
+  locations,
+  loading,
+  error,
+  selectedRoute,
+  availableRoutes,
+  machineTypeColors,
+  locationMachines,
+  createLocation,
+  updateLocation,
+  deleteLocation,
+  applyRouteFilter,
+  clearRouteFilter,
+  openMapForLocation
+} = useLocations()
 
 // Modal states
 const showModal = ref(false)
 const showDeleteModal = ref(false)
-const isEditing = ref(false)
+const editingLocation = ref(null)
 const locationToDelete = ref(null)
 
-// Form for creating/editing a location
-const locationForm = ref({
-  id: null,
-  name: '',
-  address: '',
-  route: ''
-})
-
-// Fetch all locations
-const fetchLocations = async () => {
-  loading.value = true
-  try {
-    const response = await api.getLocations()
-    allLocations.value = response.data
-    locations.value = response.data
-    
-    // After locations are loaded, fetch machines and routes
-    await Promise.all([fetchMachines(), fetchRoutes()])
-  } catch (err) {
-    console.error('Error fetching locations:', err)
-    error.value = 'Failed to load locations. Please try again later.'
-  } finally {
-    loading.value = false
-  }
-}
-
-// Fetch all machines to count by location
-const fetchMachines = async () => {
-  try {
-    const response = await api.getMachines()
-    machines.value = response.data
-  } catch (err) {
-    console.error('Error fetching machines:', err)
-  }
-}
-
-// Open modal to add a new location
+// Modal handlers
 const openAddModal = () => {
-  isEditing.value = false
-  locationForm.value = {
-    id: null,
-    name: '',
-    address: '',
-    route: ''
-  }
+  editingLocation.value = null
   showModal.value = true
 }
 
-// Open modal to edit an existing location
-const editLocation = (location) => {
-  isEditing.value = true
-  locationForm.value = {
-    id: location.id,
-    name: location.name,
-    address: location.address,
-    route: location.route || ''
-  }
+const openEditModal = (location) => {
+  editingLocation.value = location
   showModal.value = true
 }
 
-// Save the location (create or update)
-const saveLocation = async () => {
-  try {
-    if (isEditing.value) {
-      await api.updateLocation(locationForm.value.id, locationForm.value)
-    } else {
-      await api.createLocation(locationForm.value)
-    }
-    
-    showModal.value = false
-    await fetchLocations()
-    // Clear any active filters to show the updated location
-    clearRouteFilter()
-  } catch (err) {
-    console.error('Error saving location:', err)
-    error.value = 'Failed to save location. Please try again.'
-  }
+const closeModal = () => {
+  showModal.value = false
+  editingLocation.value = null
 }
 
-// Show delete confirmation modal
-const confirmDelete = (location) => {
+const openDeleteModal = (location) => {
   locationToDelete.value = location
   showDeleteModal.value = true
 }
 
-// Delete the location
-const deleteLocation = async () => {
+const closeDeleteModal = () => {
+  showDeleteModal.value = false
+  locationToDelete.value = null
+}
+
+// Save location (create or update)
+const saveLocation = async (locationData) => {
+  try {
+    if (locationData.id) {
+      await updateLocation(locationData.id, locationData)
+    } else {
+      await createLocation(locationData)
+    }
+    closeModal()
+  } catch (err) {
+    // Error handling is done in the composable
+    console.error('Error saving location:', err)
+  }
+}
+
+// Confirm delete
+const confirmDelete = async () => {
   if (!locationToDelete.value) return
   
   try {
-    await api.deleteLocation(locationToDelete.value.id)
-    showDeleteModal.value = false
-    await fetchLocations()
-    // Clear any active filters after deletion
-    clearRouteFilter()
+    await deleteLocation(locationToDelete.value.id)
+    closeDeleteModal()
   } catch (err) {
+    // Error handling is done in the composable
     console.error('Error deleting location:', err)
-    error.value = 'Failed to delete location. Please try again.'
   }
 }
-
-// Fetch available routes
-const fetchRoutes = async () => {
-  try {
-    const response = await api.getRoutes()
-    availableRoutes.value = response.data.routes
-  } catch (err) {
-    console.error('Error fetching routes:', err)
-  }
-}
-
-// Apply route filter
-const applyRouteFilter = () => {
-  if (!selectedRoute.value) {
-    locations.value = allLocations.value
-  } else if (selectedRoute.value === 'unassigned') {
-    locations.value = allLocations.value.filter(location => !location.route)
-  } else {
-    locations.value = allLocations.value.filter(location => location.route === selectedRoute.value)
-  }
-}
-
-// Clear route filter
-const clearRouteFilter = () => {
-  selectedRoute.value = ''
-  locations.value = allLocations.value
-}
-
-// Open Google Maps for location
-const openMapForLocation = (location) => {
-  if (!location || !location.address) return
-  
-  // Format the address for Google Maps URL
-  const formattedAddress = encodeURIComponent(location.address)
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${formattedAddress}`
-  
-  // Open in a new window/tab
-  window.open(mapsUrl, '_blank')
-}
-
-// Initialize data on component mount
-onMounted(fetchLocations)
 </script> 

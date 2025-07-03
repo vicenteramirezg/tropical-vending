@@ -1,107 +1,158 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { api } from '../services/api'
 
 export function useMachines() {
-  const locationMachines = ref([])
+  const machines = ref([])
   const loading = ref(false)
   const error = ref(null)
 
-  const fetchLocationMachines = async (locationId) => {
-    if (!locationId) {
-      locationMachines.value = []
-      return
-    }
+  // Machine models list
+  const machineModels = ref([
+    '3D14',
+    'AMS 39640',
+    'AMS GB624',
+    'AMS-LB9 Combo',
+    'AP Snack Shop 111',
+    'AP Snack Shop 133',
+    'AP Snack Shop 152-D',
+    'AP Snack Shop 6600',
+    'AP Snack Shop III D20C',
+    'AP Studio 3',
+    'Crane 147',
+    'Crane 148',
+    'Crane 157',
+    'Crane 158',
+    'Crane 168',
+    'Crane 172',
+    'Crane 180',
+    'Crane 181',
+    'Crane 452',
+    'Crane 784',
+    'Dixie Narco',
+    'Dixie Narco 276E',
+    'Dixie Narco 348C',
+    'Dixie Narco 368',
+    'Dixie Narco 368 12',
+    'Dixie Narco 368 R',
+    'Dixie Narco 36812',
+    'Dixie Narco 414 CC',
+    'Dixie Narco 501-C',
+    'Dixie Narco 501E',
+    'ISI 3177',
+    'Lektro Vending V599C Serie II',
+    'Royal Vendor 390-9',
+    'Royal Vendor 462-9',
+    'Royal Vendor 550-6',
+    'Royal Vendor 630-10',
+    'Royal Vendor 650-10',
+    'Royal Vendor 660',
+    'Royal Vendor 660-8',
+    'Royal Vendor 660-9',
+    'Royal Vendor 804-',
+    'Royal Vendor 804-13',
+    'Royal Vendor 804-9',
+    'Snack Mart 111 3000/Model: 301A',
+    'Snack Shop 111',
+    'Snack Shop 111 D206',
+    'Snack Shop 113',
+    'Snack Shop 6000',
+    'Snack Shop 6600',
+    'Snack Shop III 400 / Model:3014',
+    'Snack Shop LCM2',
+    'USA 3129',
+    'USI 3014A',
+    'USI 3166'
+  ])
+
+  // Group machines by location
+  const groupedMachines = computed(() => {
+    const grouped = {}
     
+    machines.value.forEach(machine => {
+      if (!grouped[machine.location]) {
+        grouped[machine.location] = []
+      }
+      grouped[machine.location].push(machine)
+    })
+    
+    return grouped
+  })
+
+  // Fetch machines with optional filters
+  const fetchMachines = async (filters = {}) => {
     loading.value = true
     error.value = null
     
     try {
-      // First fetch machines for the location
-      const machinesResponse = await api.getMachines({ location: locationId })
-      const machines = machinesResponse.data
+      const params = {}
+      if (filters.location) params.location = filters.location
+      if (filters.route) params.route = filters.route
+      if (filters.machineType) params.machine_type = filters.machineType
       
-      // Then fetch the machine items (products) for each machine
-      const machinesWithProducts = []
-      
-      for (const machine of machines) {
-        // Get products for this machine
-        const itemsResponse = await api.getMachineItems({ machine: machine.id })
-        const products = itemsResponse.data
-          .map(item => ({
-            id: item.product,
-            name: item.product_name,
-            price: item.price,
-            slot: item.slot,
-            current_stock: item.current_stock || 0,
-            stock_before: item.current_stock || 0,
-            discarded: 0,
-            restocked: 0
-          }))
-          .sort((a, b) => a.slot - b.slot) // Sort products by slot number
-        
-        machinesWithProducts.push({
-          ...machine,
-          products: products
-        })
-      }
-      
-      locationMachines.value = machinesWithProducts
+      const response = await api.getMachines(params)
+      machines.value = response.data
     } catch (err) {
-      console.error('Error fetching machines and products:', err)
-      error.value = 'Failed to load machine products. Please try again.'
+      console.error('Error fetching machines:', err)
+      error.value = 'Failed to load machines. Please try again.'
     } finally {
       loading.value = false
     }
   }
 
-  const updateMachineProductData = async (visitId, machineId) => {
+  // Create a new machine
+  const createMachine = async (machineData) => {
     try {
-      // Fetch the machine restocks for this visit and machine
-      const machineRestocksResponse = await api.getRestocks({ 
-        visit: visitId,
-        machine: machineId 
-      })
-      
-      if (machineRestocksResponse.data.length > 0) {
-        const machineRestock = machineRestocksResponse.data[0]
-        const entriesResponse = await api.getRestockEntries({ 
-          visit_machine_restock: machineRestock.id 
-        })
-        const entries = entriesResponse.data
-        
-        // Find the machine in locationMachines and update its products
-        const machineIndex = locationMachines.value.findIndex(m => m.id === machineId)
-        
-        if (machineIndex !== -1) {
-          const machine = locationMachines.value[machineIndex]
-          
-          entries.forEach(entry => {
-            const productIndex = machine.products.findIndex(p => p.id === entry.product)
-            
-            if (productIndex !== -1) {
-              machine.products[productIndex].stock_before = entry.stock_before
-              machine.products[productIndex].discarded = entry.discarded || 0
-              machine.products[productIndex].restocked = entry.restocked
-            }
-          })
-        }
-      }
+      await api.createMachine(machineData)
+      return true
     } catch (err) {
-      console.error('Error updating machine product data:', err)
-      throw err
+      console.error('Error creating machine:', err)
+      error.value = 'Failed to create machine. Please try again.'
+      return false
     }
   }
 
-  const resetMachineData = () => {
-    locationMachines.value = []
+  // Update an existing machine
+  const updateMachine = async (id, machineData) => {
+    try {
+      await api.updateMachine(id, machineData)
+      return true
+    } catch (err) {
+      console.error('Error updating machine:', err)
+      error.value = 'Failed to update machine. Please try again.'
+      return false
+    }
+  }
+
+  // Delete a machine
+  const deleteMachine = async (id) => {
+    try {
+      await api.deleteMachine(id)
+      return true
+    } catch (err) {
+      console.error('Error deleting machine:', err)
+      error.value = 'Failed to delete machine. Please try again.'
+      return false
+    }
+  }
+
+  // Clear error
+  const clearError = () => {
+    error.value = null
   }
 
   return {
-    locationMachines,
+    // State
+    machines,
     loading,
     error,
-    fetchLocationMachines,
-    updateMachineProductData,
-    resetMachineData
+    machineModels,
+    groupedMachines,
+    
+    // Actions
+    fetchMachines,
+    createMachine,
+    updateMachine,
+    deleteMachine,
+    clearError
   }
 } 

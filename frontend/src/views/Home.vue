@@ -34,7 +34,7 @@
           <div class="flex items-center space-x-4">
             <template v-if="isAuthenticated">
               <router-link
-                to="/dashboard"
+                to="/"
                 class="btn-secondary"
               >
                 Dashboard

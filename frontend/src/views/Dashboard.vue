@@ -31,15 +31,12 @@
       </div>
     </div>
     
-    <!-- Footer -->
-    <AppFooter />
   </div>
 </template>
 
 <script setup>
 import { onMounted } from 'vue'
 import { useDashboard } from '../composables/useDashboard'
-import AppFooter from '../components/AppFooter.vue'
 import FilterControls from '../components/dashboard/FilterControls.vue'
 import KpiCards from '../components/dashboard/KpiCards.vue'
 import LowStockItems from '../components/dashboard/LowStockItems.vue'

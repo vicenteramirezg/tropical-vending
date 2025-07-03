@@ -135,7 +135,7 @@ const authStore = useAuthStore()
 const mobileMenuOpen = ref(false)
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', routeName: 'dashboard' },
+  { name: 'Dashboard', href: '/', routeName: 'dashboard' },
   { name: 'Locations', href: '/locations', routeName: 'locations' },
   { name: 'Machines', href: '/machines', routeName: 'machines' },
   { name: 'Products', href: '/products', routeName: 'products' },

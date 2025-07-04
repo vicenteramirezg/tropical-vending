@@ -21,7 +21,10 @@ class WholesalePurchase(models.Model):
     @property
     def unit_cost(self):
         """Calculate cost per unit"""
-        return self.total_cost / self.quantity if self.quantity > 0 else Decimal('0.00')
+        if self.quantity > 0:
+            result = self.total_cost / Decimal(str(self.quantity))
+            return result.quantize(Decimal('0.01'))
+        return Decimal('0.00')
     
     def update_inventory(self):
         """Update the product's inventory and create a cost history record"""

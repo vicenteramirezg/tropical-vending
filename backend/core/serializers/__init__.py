@@ -7,4 +7,5 @@ from .visit_serializer import VisitSerializer
 from .visit_machine_restock_serializer import VisitMachineRestockSerializer
 from .restock_entry_serializer import RestockEntrySerializer
 from .user_serializer import UserSerializer, RegisterSerializer
-from .product_cost_serializer import ProductCostSerializer 
+from .product_cost_serializer import ProductCostSerializer
+from .demand_tracking_serializer import DemandTrackingSerializer, DemandSummarySerializer 

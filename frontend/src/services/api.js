@@ -230,6 +230,20 @@ export const api = {
     return apiClient.get('/analytics/revenue-profit/', { params })
   },
   
+  // Demand Tracking endpoints
+  getDemandTracking(params = {}) {
+    return apiClient.get('/demand-tracking/', { params })
+  },
+  getDemandSummary(params = {}) {
+    return apiClient.get('/demand-tracking/summary/', { params })
+  },
+  getDemandByMachine(machineId, params = {}) {
+    return apiClient.get(`/demand-tracking/by_machine/?machine_id=${machineId}`, { params })
+  },
+  getDemandByProduct(productId, params = {}) {
+    return apiClient.get(`/demand-tracking/by_product/?product_id=${productId}`, { params })
+  },
+  
   getProductCostHistory: async (productId) => {
     return await apiClient.get(`/product-costs/?product=${productId}`);
   }

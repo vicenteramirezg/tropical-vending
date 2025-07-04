@@ -8,15 +8,18 @@ class ProductSerializer(serializers.ModelSerializer):
     average_cost = serializers.SerializerMethodField()
     latest_cost = serializers.SerializerMethodField()
     cost_price = serializers.DecimalField(write_only=True, required=False, default=0, max_digits=10, decimal_places=2)
+    total_daily_demand = serializers.SerializerMethodField()
+    demand_records_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'product_type', 'unit_type', 'image_url', 
             'inventory_quantity', 'average_cost', 'latest_cost', 
-            'cost_price', 'created_at', 'updated_at'
+            'cost_price', 'created_at', 'updated_at',
+            'total_daily_demand', 'demand_records_count'
         ]
-        read_only_fields = ['created_at', 'updated_at', 'average_cost', 'latest_cost']
+        read_only_fields = ['created_at', 'updated_at', 'average_cost', 'latest_cost', 'total_daily_demand', 'demand_records_count']
         extra_kwargs = {
             'unit_type': {'required': False, 'default': 'unit'},
             'product_type': {'required': False, 'default': 'Soda'},
@@ -28,6 +31,14 @@ class ProductSerializer(serializers.ModelSerializer):
     
     def get_latest_cost(self, obj):
         return obj.latest_unit_cost
+    
+    def get_total_daily_demand(self, obj):
+        """Get total daily demand across all machines"""
+        return obj.get_total_demand_across_machines(days=30)
+    
+    def get_demand_records_count(self, obj):
+        """Get the number of demand records for this product"""
+        return obj.demand_records.count()
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)

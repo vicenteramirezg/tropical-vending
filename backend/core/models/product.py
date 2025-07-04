@@ -55,4 +55,61 @@ class Product(models.Model):
     def latest_unit_cost(self):
         """Get the most recent unit cost based on ProductCost entries"""
         latest_cost = self.cost_history.order_by('-date').first()
-        return latest_cost.unit_cost if latest_cost else Decimal('0.00') 
+        return latest_cost.unit_cost if latest_cost else Decimal('0.00')
+    
+    def get_demand_for_machine(self, machine, days=30):
+        """Get average daily demand for this product in a specific machine"""
+        from .demand_tracking import DemandTracking
+        return DemandTracking.get_average_demand(machine, self, days)
+    
+    def get_total_demand_across_machines(self, days=30):
+        """Get total average daily demand across all machines"""
+        from .demand_tracking import DemandTracking
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        cutoff_date = timezone.now() - timedelta(days=days)
+        
+        recent_demands = DemandTracking.objects.filter(
+            product=self,
+            current_visit__visit_date__gte=cutoff_date
+        )
+        
+        if not recent_demands.exists():
+            return Decimal('0.00')
+        
+        # Group by machine and get the latest demand for each
+        machine_demands = {}
+        for demand in recent_demands:
+            machine_id = demand.machine_id
+            if machine_id not in machine_demands:
+                machine_demands[machine_id] = demand.daily_demand
+            else:
+                # Keep the most recent demand for this machine
+                if demand.current_visit.visit_date > machine_demands[machine_id].current_visit.visit_date:
+                    machine_demands[machine_id] = demand.daily_demand
+        
+        # Sum up all machine demands
+        total_demand = sum(machine_demands.values())
+        return total_demand
+    
+    def get_recommended_stock_level(self, machine, days_ahead=7):
+        """Get recommended stock level based on demand patterns"""
+        daily_demand = self.get_demand_for_machine(machine, days=30)
+        
+        # Add a 20% buffer for safety stock
+        recommended_level = int(float(daily_demand) * days_ahead * 1.2)
+        
+        # Get machine capacity (max stock level)
+        try:
+            machine_item = machine.item_prices.get(product=self)
+            # If we don't have a max capacity, use a reasonable default
+            max_capacity = getattr(machine_item, 'max_stock', 50)  # Default to 50 if not set
+            
+            # Don't exceed machine capacity
+            recommended_level = min(recommended_level, max_capacity)
+        except:
+            # If product isn't in machine, return 0
+            recommended_level = 0
+        
+        return max(recommended_level, 0) 

@@ -43,4 +43,34 @@ class RestockEntry(models.Model):
             except ValueError as e:
                 # Handle case where there's not enough inventory
                 # You might want to add custom error handling here
-                raise 
+                raise
+            
+            # Calculate and record demand data
+            self._calculate_demand()
+    
+    def _calculate_demand(self):
+        """Calculate demand based on this restock entry"""
+        try:
+            from .demand_tracking import DemandTracking
+            
+            # Calculate stock after restock
+            stock_after = self.stock_before - self.discarded + self.restocked
+            
+            # Calculate demand
+            DemandTracking.calculate_demand(
+                machine=self.visit_machine_restock.machine,
+                product=self.product,
+                current_visit=self.visit_machine_restock.visit,
+                current_stock_before=self.stock_before,
+                current_stock_after=stock_after
+            )
+        except Exception as e:
+            # Log the error but don't fail the save operation
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error calculating demand for restock entry {self.id}: {str(e)}")
+    
+    @property
+    def stock_after(self):
+        """Calculate stock after restock"""
+        return self.stock_before - self.discarded + self.restocked 

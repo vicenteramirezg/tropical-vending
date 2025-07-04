@@ -4,7 +4,7 @@ from core.views import (
     LocationViewSet, MachineViewSet, ProductViewSet, 
     MachineItemPriceViewSet, WholesalePurchaseViewSet,
     VisitViewSet, VisitMachineRestockViewSet, RestockEntryViewSet,
-    RegisterView, UserProfileView, ProductCostViewSet,
+    RegisterView, UserProfileView, ProductCostViewSet, DemandTrackingViewSet,
     StockLevelView, DemandAnalysisView, RevenueProfitView, DashboardView
 )
 
@@ -19,6 +19,7 @@ router.register(r'visits', VisitViewSet)
 router.register(r'restocks', VisitMachineRestockViewSet)
 router.register(r'restock-entries', RestockEntryViewSet)
 router.register(r'product-costs', ProductCostViewSet)
+router.register(r'demand-tracking', DemandTrackingViewSet)
 
 urlpatterns = [
     # Include router URLs

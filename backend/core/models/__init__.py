@@ -7,6 +7,7 @@ from .visit import Visit
 from .visit_machine_restock import VisitMachineRestock
 from .restock_entry import RestockEntry
 from .product_cost import ProductCost
+from .demand_tracking import DemandTracking
 
 __all__ = [
     'Location',
@@ -18,4 +19,5 @@ __all__ = [
     'VisitMachineRestock',
     'RestockEntry',
     'ProductCost',
+    'DemandTracking',
 ] 

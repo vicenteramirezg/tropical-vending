@@ -58,6 +58,12 @@ const router = createRouter({
           name: 'analytics',
           component: () => import('../views/Analytics.vue'),
           meta: { title: 'Analytics' }
+        },
+        {
+          path: 'demand',
+          name: 'demand-analysis',
+          component: () => import('../views/DemandAnalysis.vue'),
+          meta: { title: 'Demand Analysis' }
         }
       ]
     },

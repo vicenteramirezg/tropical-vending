@@ -3,6 +3,7 @@ import { api } from '../services/api'
 
 export function useMachines() {
   const machines = ref([])
+  const locationMachines = ref([])
   const loading = ref(false)
   const error = ref(null)
 
@@ -99,6 +100,102 @@ export function useMachines() {
     }
   }
 
+  // Fetch machines for a specific location with their products
+  const fetchLocationMachines = async (locationId) => {
+    if (!locationId) {
+      locationMachines.value = []
+      return
+    }
+    
+    loading.value = true
+    error.value = null
+    
+    try {
+      // Fetch machines for this location
+      const machinesResponse = await api.getMachines({ location: locationId })
+      const machines = machinesResponse.data
+      
+      // For each machine, fetch its products
+      const machinesWithProducts = await Promise.all(
+        machines.map(async (machine) => {
+          try {
+            const productsResponse = await api.getMachineItems({ machine: machine.id })
+            const products = productsResponse.data.map(item => ({
+              id: item.product,
+              name: item.product_name,
+              slot: item.slot,
+              current_stock: item.current_stock || 0,
+              stock_before: '',
+              discarded: 0,
+              restocked: ''
+            }))
+            
+            return {
+              ...machine,
+              products
+            }
+          } catch (err) {
+            console.error(`Error fetching products for machine ${machine.id}:`, err)
+            return {
+              ...machine,
+              products: []
+            }
+          }
+        })
+      )
+      
+      locationMachines.value = machinesWithProducts
+    } catch (err) {
+      console.error('Error fetching location machines:', err)
+      error.value = 'Failed to load machines for this location. Please try again.'
+      locationMachines.value = []
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Update machine product data with existing restock entries
+  const updateMachineProductData = async (visitId, machineId) => {
+    try {
+      // Find the machine in locationMachines
+      const machine = locationMachines.value.find(m => m.id === machineId)
+      if (!machine) return
+      
+      // Get existing restock entries for this visit and machine
+      const restocksResponse = await api.getRestocks({ 
+        visit: visitId, 
+        machine: machineId 
+      })
+      
+      if (restocksResponse.data.length > 0) {
+        const visitMachineRestock = restocksResponse.data[0]
+        
+        // Get restock entries for this visit machine restock
+        const entriesResponse = await api.getRestockEntries({ 
+          visit_machine_restock: visitMachineRestock.id 
+        })
+        
+        // Update each product with existing data
+        machine.products.forEach(product => {
+          const existingEntry = entriesResponse.data.find(entry => entry.product === product.id)
+          if (existingEntry) {
+            product.stock_before = existingEntry.stock_before || ''
+            product.discarded = existingEntry.discarded || 0
+            product.restocked = existingEntry.restocked || ''
+          }
+        })
+      }
+    } catch (err) {
+      console.error('Error updating machine product data:', err)
+      // Don't throw error here, just log it
+    }
+  }
+
+  // Reset machine data
+  const resetMachineData = () => {
+    locationMachines.value = []
+  }
+
   // Create a new machine
   const createMachine = async (machineData) => {
     try {
@@ -143,6 +240,7 @@ export function useMachines() {
   return {
     // State
     machines,
+    locationMachines,
     loading,
     error,
     machineModels,
@@ -150,6 +248,9 @@ export function useMachines() {
     
     // Actions
     fetchMachines,
+    fetchLocationMachines,
+    updateMachineProductData,
+    resetMachineData,
     createMachine,
     updateMachine,
     deleteMachine,

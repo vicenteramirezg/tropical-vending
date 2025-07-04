@@ -15,7 +15,7 @@
     <RestockList
       :restocks="restocks"
       :loading="loading"
-      :error="error"
+      :error="restocksError"
       @add-restock="handleAddRestock"
       @view-details="handleViewDetails"
       @edit-restock="handleEditRestock"
@@ -73,7 +73,7 @@ import DeleteConfirmationModal from '../components/restocks/DeleteConfirmationMo
 
 // Composables
 const authStore = useAuthStore()
-const { restocks, loading, error, fetchRestocks, createVisit, updateVisit, deleteVisit, getVisitDetails } = useRestocks()
+const { restocks, loading, error: restocksError, fetchRestocks, createVisit, updateVisit, deleteVisit, getVisitDetails } = useRestocks()
 const { filteredLocations, routes, selectedRoute, locationSearchText, fetchLocations, fetchRoutes, resetFilters } = useLocations()
 const { locationMachines, fetchLocationMachines, updateMachineProductData, resetMachineData } = useMachines()
 const { restockForm, isEditing, selectedLocation, initializeForm, saveRestock, resetForm } = useRestockForm()
@@ -109,7 +109,7 @@ const handleEditRestock = async (restock) => {
     showModal.value = true
   } catch (err) {
     console.error('Error loading visit for editing:', err)
-    error.value = 'Failed to load visit details for editing. Please try again.'
+    restocksError.value = 'Failed to load visit details for editing. Please try again.'
   }
 }
 
@@ -126,7 +126,7 @@ const handleViewDetails = async (restock) => {
     showDetailsModal.value = true
   } catch (err) {
     console.error('Error fetching visit details:', err)
-    error.value = 'Failed to load visit details. Please try again.'
+    restocksError.value = 'Failed to load visit details. Please try again.'
   }
 }
 
@@ -142,7 +142,7 @@ const handleConfirmDelete = async () => {
     selectedDeleteRestock.value = null
   } catch (err) {
     console.error('Error deleting visit:', err)
-    error.value = 'Failed to delete visit. Please try again.'
+    restocksError.value = 'Failed to delete visit. Please try again.'
   }
 }
 

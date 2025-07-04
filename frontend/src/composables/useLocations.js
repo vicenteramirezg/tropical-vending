@@ -10,6 +10,7 @@ export function useLocations() {
   const error = ref(null)
   const selectedRoute = ref('')
   const availableRoutes = ref([])
+  const locationSearchText = ref('')
 
   // Machine type colors for badges
   const machineTypeColors = {
@@ -45,6 +46,34 @@ export function useLocations() {
     
     return result
   })
+
+  // Computed property for filtered locations based on route and search text
+  const filteredLocations = computed(() => {
+    let filtered = allLocations.value
+
+    // Filter by route
+    if (selectedRoute.value) {
+      if (selectedRoute.value === 'unassigned') {
+        filtered = filtered.filter(location => !location.route)
+      } else {
+        filtered = filtered.filter(location => location.route === selectedRoute.value)
+      }
+    }
+
+    // Filter by search text
+    if (locationSearchText.value.trim()) {
+      const searchTerm = locationSearchText.value.toLowerCase().trim()
+      filtered = filtered.filter(location => 
+        location.name.toLowerCase().includes(searchTerm) ||
+        location.address.toLowerCase().includes(searchTerm)
+      )
+    }
+
+    return filtered
+  })
+
+  // Computed property for routes (alias for availableRoutes)
+  const routes = computed(() => availableRoutes.value)
 
   // API Methods
   const fetchLocations = async () => {
@@ -134,6 +163,13 @@ export function useLocations() {
     locations.value = allLocations.value
   }
 
+  // Reset all filters
+  const resetFilters = () => {
+    selectedRoute.value = ''
+    locationSearchText.value = ''
+    locations.value = allLocations.value
+  }
+
   // Utility Methods
   const openMapForLocation = (location) => {
     if (!location || !location.address) return
@@ -156,16 +192,23 @@ export function useLocations() {
     error,
     selectedRoute,
     availableRoutes,
+    locationSearchText,
     machineTypeColors,
     locationMachines,
     
+    // Computed
+    filteredLocations,
+    routes,
+    
     // Methods
     fetchLocations,
+    fetchRoutes,
     createLocation,
     updateLocation,
     deleteLocation,
     applyRouteFilter,
     clearRouteFilter,
+    resetFilters,
     openMapForLocation
   }
 } 

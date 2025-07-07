@@ -54,6 +54,12 @@ const router = createRouter({
           meta: { title: 'Wholesale Purchases' }
         },
         {
+          path: 'suppliers',
+          name: 'suppliers',
+          component: () => import('../views/Suppliers.vue'),
+          meta: { title: 'Suppliers' }
+        },
+        {
           path: 'analytics',
           name: 'analytics',
           component: () => import('../views/Analytics.vue'),

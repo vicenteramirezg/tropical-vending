@@ -2,6 +2,7 @@ from .location_serializer import LocationSerializer
 from .machine_serializer import MachineSerializer
 from .product_serializer import ProductSerializer
 from .machine_item_price_serializer import MachineItemPriceSerializer
+from .supplier_serializer import SupplierSerializer, SupplierListSerializer
 from .wholesale_purchase_serializer import WholesalePurchaseSerializer
 from .visit_serializer import VisitSerializer
 from .visit_machine_restock_serializer import VisitMachineRestockSerializer

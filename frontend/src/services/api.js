@@ -148,6 +148,29 @@ export const api = {
     return apiClient.delete(`/machine-items/${id}/`)
   },
   
+  // Supplier endpoints
+  getSuppliers(params = {}) {
+    return apiClient.get('/suppliers/', { params })
+  },
+  getSupplier(id) {
+    return apiClient.get(`/suppliers/${id}/`)
+  },
+  createSupplier(data) {
+    return apiClient.post('/suppliers/', data)
+  },
+  updateSupplier(id, data) {
+    return apiClient.put(`/suppliers/${id}/`, data)
+  },
+  deleteSupplier(id) {
+    return apiClient.delete(`/suppliers/${id}/`)
+  },
+  getActiveSuppliers() {
+    return apiClient.get('/suppliers/active/')
+  },
+  toggleSupplierActive(id) {
+    return apiClient.post(`/suppliers/${id}/toggle_active/`)
+  },
+  
   // Wholesale Purchase endpoints
   getPurchases(params = {}) {
     return apiClient.get('/purchases/', { params })

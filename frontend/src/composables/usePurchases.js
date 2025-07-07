@@ -6,6 +6,7 @@ export function usePurchases() {
   // State
   const purchases = ref([])
   const products = ref([])
+  const suppliers = ref([])
   const loading = ref(true)
   const error = ref(null)
   const selectedProduct = ref(null)
@@ -78,6 +79,15 @@ export function usePurchases() {
       products.value = response.data
     } catch (err) {
       console.error('Error fetching products:', err)
+    }
+  }
+
+  const fetchSuppliers = async () => {
+    try {
+      const response = await api.getActiveSuppliers()
+      suppliers.value = response.data
+    } catch (err) {
+      console.error('Error fetching suppliers:', err)
     }
   }
 
@@ -255,13 +265,14 @@ export function usePurchases() {
   }
 
   const initialize = async () => {
-    await Promise.all([fetchPurchases(), fetchProducts()])
+    await Promise.all([fetchPurchases(), fetchProducts(), fetchSuppliers()])
   }
 
   return {
     // State
     purchases,
     products,
+    suppliers,
     loading,
     error,
     selectedProduct,
@@ -278,6 +289,7 @@ export function usePurchases() {
     // Methods
     fetchPurchases,
     fetchProducts,
+    fetchSuppliers,
     onProductChange,
     calculateNewInventory,
     openAddModal,

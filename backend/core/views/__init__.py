@@ -2,6 +2,7 @@ from .location_views import LocationViewSet
 from .machine_views import MachineViewSet
 from .product_views import ProductViewSet
 from .machine_item_price_views import MachineItemPriceViewSet
+from .supplier_views import SupplierViewSet
 from .wholesale_purchase_views import WholesalePurchaseViewSet
 from .visit_views import VisitViewSet
 from .visit_machine_restock_views import VisitMachineRestockViewSet

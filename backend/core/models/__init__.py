@@ -2,6 +2,7 @@ from .location import Location
 from .machine import Machine
 from .product import Product
 from .machine_item_price import MachineItemPrice
+from .supplier import Supplier
 from .wholesale_purchase import WholesalePurchase
 from .visit import Visit
 from .visit_machine_restock import VisitMachineRestock
@@ -13,6 +14,7 @@ __all__ = [
     'Machine', 
     'Product',
     'MachineItemPrice',
+    'Supplier',
     'WholesalePurchase',
     'Visit',
     'VisitMachineRestock',

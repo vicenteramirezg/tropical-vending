@@ -43,8 +43,9 @@
                       required
                     >
                       <option value="" disabled>Select a supplier</option>
-                      <option value="Sams">Sams</option>
-                      <option value="Star">Star</option>
+                      <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.id">
+                        {{ supplier.name }}
+                      </option>
                     </select>
                   </div>
                   
@@ -166,6 +167,10 @@ const props = defineProps({
     required: true
   },
   products: {
+    type: Array,
+    default: () => []
+  },
+  suppliers: {
     type: Array,
     default: () => []
   },

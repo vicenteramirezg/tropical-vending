@@ -9,14 +9,16 @@ class WholesalePurchase(models.Model):
     quantity = models.IntegerField()
     total_cost = models.DecimalField(max_digits=10, decimal_places=2)
     purchased_at = models.DateTimeField()
-    supplier = models.CharField(max_length=100, blank=True, default='')
+    supplier = models.ForeignKey('core.Supplier', on_delete=models.SET_NULL, null=True, blank=True, related_name='wholesale_purchases')
+    supplier_name = models.CharField(max_length=100, blank=True, default='', help_text="Legacy supplier name field for backward compatibility")
     notes = models.TextField(blank=True, default='')
     inventory_updated = models.BooleanField(default=False, help_text="Flag to track if inventory has been updated")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.quantity} {self.product.unit_type}(s) of {self.product.name} purchased on {self.purchased_at.date()}"
+        supplier_display = self.supplier or 'Unknown Supplier'
+        return f"{self.quantity} {self.product.unit_type}(s) of {self.product.name} from {supplier_display} on {self.purchased_at.date()}"
     
     @property
     def unit_cost(self):

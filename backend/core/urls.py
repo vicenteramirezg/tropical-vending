@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from core.views import (
     LocationViewSet, MachineViewSet, ProductViewSet, 
-    MachineItemPriceViewSet, WholesalePurchaseViewSet,
+    MachineItemPriceViewSet, SupplierViewSet, WholesalePurchaseViewSet,
     VisitViewSet, VisitMachineRestockViewSet, RestockEntryViewSet,
     RegisterView, UserProfileView, ProductCostViewSet,
     StockLevelView, DemandAnalysisView, RevenueProfitView, DashboardView
@@ -14,6 +14,7 @@ router.register(r'locations', LocationViewSet)
 router.register(r'machines', MachineViewSet)
 router.register(r'products', ProductViewSet)
 router.register(r'machine-items', MachineItemPriceViewSet)
+router.register(r'suppliers', SupplierViewSet)
 router.register(r'purchases', WholesalePurchaseViewSet)
 router.register(r'visits', VisitViewSet)
 router.register(r'restocks', VisitMachineRestockViewSet)

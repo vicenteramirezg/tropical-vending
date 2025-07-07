@@ -391,15 +391,15 @@
           <!-- Map -->
           <div class="glass-card p-4 animate-fade-in-right">
             <div class="rounded-2xl overflow-hidden h-96 lg:h-full">
-              <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3592.2069490866943!2d-80.3835361!3d25.8168505!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x88d9bb0a8d6a7a45%3A0x4c435a70c1f01e69!2s4749%20NW%20109th%20Ct%2C%20Doral%2C%20FL%2033178!5e0!3m2!1sen!2sus!4v1721341650780!5m2!1sen!2sus" 
-                width="100%" 
-                height="100%" 
-                style="border:0;" 
-                allowfullscreen="" 
-                loading="lazy" 
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d382353.0912138765!2d-80.3547644!3d26.0104296!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sus!4v1720368350000!5m2!1sen!2sus"
+                width="100%"
+                height="100%"
+                style="border:0;"
+                allowfullscreen=""
+                loading="lazy"
                 referrerpolicy="no-referrer-when-downgrade"
-                title="Tropical Vending Office Location"
+                title="Miami-Dade and Broward Counties"
                 class="w-full h-full filter grayscale hover:grayscale-0 transition-all duration-500">
               </iframe>
             </div>

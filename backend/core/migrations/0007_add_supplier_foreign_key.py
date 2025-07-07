@@ -50,11 +50,18 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
+        # Step 1: Remove the old CharField supplier field
+        migrations.RemoveField(
+            model_name='wholesalepurchase',
+            name='supplier',
+        ),
+        # Step 2: Add the new ForeignKey supplier field
+        migrations.AddField(
             model_name='wholesalepurchase',
             name='supplier',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='wholesale_purchases', to='core.supplier'),
         ),
+        # Step 3: Populate the foreign key relationships
         migrations.RunPython(
             populate_supplier_foreign_keys,
             reverse_populate_supplier_foreign_keys,

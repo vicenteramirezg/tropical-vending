@@ -226,12 +226,16 @@ LOGGING = {
             'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'simple',
         },
     },
     'root': {
@@ -246,17 +250,17 @@ LOGGING = {
         },
         'django.request': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'WARNING',  # Only log warnings and errors for requests
             'propagate': False,
         },
         'django.server': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',  # Reduced from DEBUG to INFO
             'propagate': False,
         },
         'django.db.backends': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'WARNING',  # Changed from DEBUG to WARNING - this stops SQL query logging
             'propagate': False,
         },
     },

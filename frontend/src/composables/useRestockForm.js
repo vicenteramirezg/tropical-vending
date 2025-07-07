@@ -42,19 +42,42 @@ export function useRestockForm() {
   }
 
   const validateForm = (locationMachines) => {
-    // Validate that all products have stock levels recorded
-    const hasEmptyFields = locationMachines.some(machine => 
+    // Check if at least one machine has restock data
+    const hasAnyRestockData = locationMachines.some(machine => 
       machine.products.some(product => 
-        product.stock_before === '' || product.restocked === ''
+        hasRestockData(product)
       )
     )
     
-    if (hasEmptyFields) {
-      error.value = 'Please record stock levels for all products in all machines'
+    if (!hasAnyRestockData) {
+      error.value = 'Please record stock levels for at least one product'
+      return false
+    }
+    
+    // Validate that products with partial data have all required fields
+    const hasIncompleteData = locationMachines.some(machine => 
+      machine.products.some(product => {
+        const hasPartialData = hasRestockData(product)
+        if (hasPartialData) {
+          // If any field has data, stock_before and restocked are required
+          return product.stock_before === '' || product.restocked === ''
+        }
+        return false
+      })
+    )
+    
+    if (hasIncompleteData) {
+      error.value = 'Please complete all fields for products being restocked (stock before and restock amount are required)'
       return false
     }
     
     return true
+  }
+
+  const hasRestockData = (product) => {
+    return product.stock_before !== '' || 
+           product.restocked !== '' || 
+           product.discarded !== ''
   }
 
   const saveRestock = async (locationMachines, createVisit, updateVisit) => {
@@ -97,7 +120,12 @@ export function useRestockForm() {
   }
 
   const processMachineRestocks = async (visitId, locationMachines) => {
-    for (const machine of locationMachines) {
+    // Only process machines that have restock data
+    const machinesWithRestockData = locationMachines.filter(machine => 
+      machine.products.some(product => hasRestockData(product))
+    )
+    
+    for (const machine of machinesWithRestockData) {
       let visitMachineRestockId
       
       if (isEditing.value) {
@@ -152,7 +180,10 @@ export function useRestockForm() {
   }
 
   const processRestockEntries = async (visitMachineRestockId, products) => {
-    for (const product of products) {
+    // Only process products that have restock data
+    const productsWithRestockData = products.filter(product => hasRestockData(product))
+    
+    for (const product of productsWithRestockData) {
       try {
         const restockEntryData = {
           visit_machine_restock: visitMachineRestockId,

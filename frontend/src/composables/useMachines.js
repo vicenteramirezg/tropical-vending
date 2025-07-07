@@ -126,7 +126,7 @@ export function useMachines() {
               slot: item.slot,
               current_stock: item.current_stock || 0,
               stock_before: '',
-              discarded: 0,
+              discarded: '',
               restocked: ''
             }))
             
@@ -180,7 +180,7 @@ export function useMachines() {
           const existingEntry = entriesResponse.data.find(entry => entry.product === product.id)
           if (existingEntry) {
             product.stock_before = existingEntry.stock_before || ''
-            product.discarded = existingEntry.discarded || 0
+            product.discarded = existingEntry.discarded || ''
             product.restocked = existingEntry.restocked || ''
           }
         })

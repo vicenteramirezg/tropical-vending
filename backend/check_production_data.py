@@ -15,12 +15,12 @@ def check_production_data():
     
     with connection.cursor() as cursor:
         # Check wholesale purchases
-        cursor.execute("SELECT id, supplier, supplier_name FROM core_wholesalepurchase")
+        cursor.execute("SELECT id, supplier_id, supplier_name FROM core_wholesalepurchase")
         rows = cursor.fetchall()
         
         print(f"Found {len(rows)} wholesale purchases:")
         for row in rows:
-            print(f"  ID {row[0]}: supplier='{row[1]}', supplier_name='{row[2]}'")
+            print(f"  ID {row[0]}: supplier_id={row[1]}, supplier_name='{row[2]}'")
         
         # Check suppliers
         cursor.execute("SELECT id, name FROM core_supplier")

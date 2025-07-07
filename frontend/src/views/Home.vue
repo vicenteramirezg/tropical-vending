@@ -341,7 +341,7 @@
                 </div>
                 <div>
                   <h4 class="text-white font-semibold mb-1">Address</h4>
-                  <p class="text-gray-400">4749 NW 109th Court<br>Doral, FL 33178</p>
+                  <p class="text-gray-400">Doral, FL 33178</p>
                 </div>
               </div>
 
@@ -353,7 +353,7 @@
                 </div>
                 <div>
                   <h4 class="text-white font-semibold mb-1">Phone</h4>
-                  <a href="tel:3057739307" class="text-cyan-400 hover:text-cyan-300 transition-colors">305-773-9307</a>
+                  <a href="tel:3057739307" class="text-cyan-400 hover:text-cyan-300 transition-colors">305-999-7570</a>
                 </div>
               </div>
 
@@ -365,7 +365,7 @@
                 </div>
                 <div>
                   <h4 class="text-white font-semibold mb-1">WhatsApp</h4>
-                  <a href="https://wa.me/13057739307?text=Hello%20Tropical%20Vending,%20I%20would%20like%20to%20do%20business%20with%20you." 
+                  <a href="https://wa.me/17869602051?text=Hello%20Tropical%20Vending,%20I%20would%20like%20to%20do%20business%20with%20you." 
                      target="_blank" 
                      rel="noopener noreferrer" 
                      class="text-green-400 hover:text-green-300 transition-colors">

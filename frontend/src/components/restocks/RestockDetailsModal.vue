@@ -36,9 +36,9 @@
                   <h4 class="text-sm font-medium text-gray-500 mb-4">Restocked Items</h4>
                   
                   <!-- Group entries by machine -->
-                  <div v-for="(machineEntries, machineInfo) in entriesByMachine" :key="machineInfo" class="mb-6">
+                  <div v-for="(machineEntries, machineDisplay) in entriesByMachine" :key="machineDisplay" class="mb-6">
                     <h5 class="text-sm font-semibold text-gray-700 mb-2 bg-gray-100 px-3 py-2 rounded-md">
-                      {{ machineInfo }}
+                      {{ machineDisplay }}
                     </h5>
                     
                     <div class="border border-gray-200 rounded-md overflow-hidden">
@@ -119,18 +119,19 @@ const entriesByMachine = computed(() => {
   const grouped = {}
   
   props.restock.entries.forEach(entry => {
-    const machineInfo = entry.machine_info || 'Unknown Machine'
+    const machineKey = `${entry.machine_name || 'Unknown'}-${entry.machine_type || ''}-${entry.machine_model || ''}`
+    const machineDisplay = `${entry.machine_name || 'Unknown Machine'} (${entry.machine_type || 'Unknown Type'}${entry.machine_model ? ' ' + entry.machine_model : ''})`
     
-    if (!grouped[machineInfo]) {
-      grouped[machineInfo] = []
+    if (!grouped[machineDisplay]) {
+      grouped[machineDisplay] = []
     }
     
-    grouped[machineInfo].push(entry)
+    grouped[machineDisplay].push(entry)
   })
   
   // Sort entries within each machine group by slot number
-  Object.keys(grouped).forEach(machineInfo => {
-    grouped[machineInfo].sort((a, b) => {
+  Object.keys(grouped).forEach(machineDisplay => {
+    grouped[machineDisplay].sort((a, b) => {
       const slotA = a.slot || 999
       const slotB = b.slot || 999
       return slotA - slotB

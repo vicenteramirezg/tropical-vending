@@ -4,23 +4,31 @@ from core.models import RestockEntry, MachineItemPrice
 
 class RestockEntrySerializer(serializers.ModelSerializer):
     product_name = serializers.SerializerMethodField()
-    machine_info = serializers.SerializerMethodField()
+    machine_name = serializers.SerializerMethodField()
+    machine_type = serializers.SerializerMethodField()
+    machine_model = serializers.SerializerMethodField()
     visit_date = serializers.SerializerMethodField()
     slot = serializers.SerializerMethodField()
     
     class Meta:
         model = RestockEntry
         fields = ['id', 'visit_machine_restock', 'product', 'product_name', 
-                 'machine_info', 'visit_date', 'slot', 'stock_before', 'discarded', 'restocked', 
-                 'created_at', 'updated_at']
-        read_only_fields = ['created_at', 'updated_at', 'product_name', 'machine_info', 'visit_date', 'slot']
+                 'machine_name', 'machine_type', 'machine_model', 'visit_date', 'slot', 
+                 'stock_before', 'discarded', 'restocked', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at', 'product_name', 'machine_name', 
+                           'machine_type', 'machine_model', 'visit_date', 'slot']
     
     def get_product_name(self, obj):
         return obj.product.name
     
-    def get_machine_info(self, obj):
-        machine = obj.visit_machine_restock.machine
-        return f"{machine.machine_type} {machine.model} at {machine.location.name}"
+    def get_machine_name(self, obj):
+        return obj.visit_machine_restock.machine.name
+    
+    def get_machine_type(self, obj):
+        return obj.visit_machine_restock.machine.machine_type
+    
+    def get_machine_model(self, obj):
+        return obj.visit_machine_restock.machine.model or ''
     
     def get_visit_date(self, obj):
         return obj.visit_machine_restock.visit.visit_date

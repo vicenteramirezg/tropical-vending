@@ -101,7 +101,9 @@ export function useRestocks() {
         previous_quantity: entry.stock_before,
         quantity_discarded: entry.discarded,
         quantity_added: entry.restocked,
-        machine_info: entry.machine_info,
+        machine_name: entry.machine_name,
+        machine_type: entry.machine_type,
+        machine_model: entry.machine_model,
         slot: entry.slot
       }))
     } catch (err) {

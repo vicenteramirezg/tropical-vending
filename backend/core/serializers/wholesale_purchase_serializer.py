@@ -51,10 +51,18 @@ class WholesalePurchaseSerializer(serializers.ModelSerializer):
         
     def validate_supplier(self, value):
         """Validate that the supplier exists and is active"""
+        
         # Handle empty string or None
         if value is None or value == '' or value == 'null':
             return None
+        
+        # If Django REST Framework has already converted the ID to a Supplier object
+        if isinstance(value, Supplier):
+            if not value.is_active:
+                raise serializers.ValidationError("Supplier is not active.")
+            return value
             
+        # Handle case where we receive an ID (integer or string)
         # Convert string ID to integer if needed
         if isinstance(value, str):
             try:
@@ -65,7 +73,7 @@ class WholesalePurchaseSerializer(serializers.ModelSerializer):
         # Validate supplier exists and is active
         try:
             supplier = Supplier.objects.get(id=value, is_active=True)
-            return value  # Return the ID, not the supplier instance
+            return supplier  # Return the supplier instance
         except Supplier.DoesNotExist:
             raise serializers.ValidationError("Invalid supplier or supplier is not active.")
         

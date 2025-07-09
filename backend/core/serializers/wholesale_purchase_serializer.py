@@ -65,7 +65,7 @@ class WholesalePurchaseSerializer(serializers.ModelSerializer):
         # Validate supplier exists and is active
         try:
             supplier = Supplier.objects.get(id=value, is_active=True)
-            return supplier
+            return value  # Return the ID, not the supplier instance
         except Supplier.DoesNotExist:
             raise serializers.ValidationError("Invalid supplier or supplier is not active.")
         

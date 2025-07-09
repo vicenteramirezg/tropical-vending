@@ -40,9 +40,8 @@
                       :value="form.supplier"
                       @input="$emit('update:form', { ...form, supplier: $event.target.value })"
                       class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
-                      required
                     >
-                      <option value="" disabled>Select a supplier</option>
+                      <option value="">Select a supplier (optional)</option>
                       <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.id">
                         {{ supplier.name }}
                       </option>

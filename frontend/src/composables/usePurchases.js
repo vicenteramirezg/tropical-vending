@@ -189,7 +189,7 @@ export function usePurchases() {
       
       const purchaseData = {
         product: purchaseForm.value.product,
-        supplier: purchaseForm.value.supplier,
+        supplier: purchaseForm.value.supplier || null,
         purchased_at: dateWithTime,
         purchase_date: dateWithTime,
         quantity: quantity,

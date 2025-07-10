@@ -174,7 +174,7 @@
       :supplier="selectedSupplier"
       :loading="modalLoading"
       @close="closeModal"
-      @save="saveSupplier"
+      @save="saveSupplierWithLoading"
     />
     
     <!-- Delete Confirmation Modal -->
@@ -207,7 +207,6 @@ const {
   isEditing,
   supplierToDelete,
   selectedSupplier,
-  supplierForm,
   
   // Computed
   supplierCount,

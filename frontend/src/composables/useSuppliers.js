@@ -11,34 +11,10 @@ export function useSuppliers() {
   const supplierToDelete = ref(null)
   const selectedSupplier = ref(null)
 
-  // Form state
-  const supplierForm = ref({
-    name: '',
-    contact_person: '',
-    phone: '',
-    email: '',
-    address: '',
-    notes: '',
-    is_active: true
-  })
-
   // Computed properties
   const supplierCount = computed(() => suppliers.value.length)
   const activeSuppliers = computed(() => suppliers.value.filter(s => s.is_active))
   const inactiveSuppliers = computed(() => suppliers.value.filter(s => !s.is_active))
-
-  // Reset form
-  const resetForm = () => {
-    supplierForm.value = {
-      name: '',
-      contact_person: '',
-      phone: '',
-      email: '',
-      address: '',
-      notes: '',
-      is_active: true
-    }
-  }
 
   // Fetch all suppliers
   const fetchSuppliers = async (params = {}) => {
@@ -140,14 +116,12 @@ export function useSuppliers() {
 
   // Modal management
   const openAddModal = () => {
-    resetForm()
     isEditing.value = false
     selectedSupplier.value = null
     showModal.value = true
   }
 
   const editSupplier = (supplier) => {
-    supplierForm.value = { ...supplier }
     isEditing.value = true
     selectedSupplier.value = supplier
     showModal.value = true
@@ -155,7 +129,6 @@ export function useSuppliers() {
 
   const closeModal = () => {
     showModal.value = false
-    resetForm()
     isEditing.value = false
     selectedSupplier.value = null
   }
@@ -171,12 +144,12 @@ export function useSuppliers() {
   }
 
   // Save supplier (create or update)
-  const saveSupplier = async () => {
+  const saveSupplier = async (supplierData) => {
     try {
       if (isEditing.value) {
-        await updateSupplier(selectedSupplier.value.id, supplierForm.value)
+        await updateSupplier(selectedSupplier.value.id, supplierData)
       } else {
-        await createSupplier(supplierForm.value)
+        await createSupplier(supplierData)
       }
       closeModal()
     } catch (err) {
@@ -214,7 +187,6 @@ export function useSuppliers() {
     isEditing,
     supplierToDelete,
     selectedSupplier,
-    supplierForm,
     
     // Computed
     supplierCount,
@@ -236,7 +208,6 @@ export function useSuppliers() {
     saveSupplier,
     handleDeleteSupplier,
     findSupplierById,
-    resetForm,
     initialize
   }
 } 

@@ -255,6 +255,17 @@ export const api = {
   
   getProductCostHistory: async (productId) => {
     return await apiClient.get(`/product-costs/?product=${productId}`);
+  },
+
+  // Inventory reporting endpoints
+  getCurrentStockReport(params = {}) {
+    return apiClient.get('/inventory/current-stock/', { params })
+  },
+  getRestockSummary(params = {}) {
+    return apiClient.get('/inventory/restock-summary/', { params })
+  },
+  getStockCoverageEstimate(params = {}) {
+    return apiClient.get('/inventory/stock-coverage/', { params })
   }
 }
 

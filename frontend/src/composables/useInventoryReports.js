@@ -52,7 +52,7 @@ export function useInventoryReports() {
   // Load locations
   const loadLocations = async () => {
     try {
-      const response = await api.get('/locations/')
+      const response = await api.getLocations()
       locations.value = response.data.results || response.data || []
     } catch (err) {
       console.error('Error loading locations:', err)
@@ -62,7 +62,7 @@ export function useInventoryReports() {
   // Load products
   const loadProducts = async () => {
     try {
-      const response = await api.get('/products/')
+      const response = await api.getProducts()
       products.value = response.data.results || response.data || []
     } catch (err) {
       console.error('Error loading products:', err)
@@ -78,7 +78,7 @@ export function useInventoryReports() {
       if (filters.product) params.product = filters.product
       if (filters.machine) params.machine = filters.machine
 
-      const response = await api.get('/inventory/current-stock/', { params })
+      const response = await api.getCurrentStockReport(params)
       currentStockData.value = response.data
     } catch (err) {
       console.error('Error loading current stock:', err)
@@ -102,7 +102,7 @@ export function useInventoryReports() {
         params.days = filters.days
       }
 
-      const response = await api.get('/inventory/restock-summary/', { params })
+      const response = await api.getRestockSummary(params)
       restockSummaryData.value = response.data
     } catch (err) {
       console.error('Error loading restock summary:', err)
@@ -121,7 +121,7 @@ export function useInventoryReports() {
       if (filters.product) params.product = filters.product
       if (filters.analysisDays) params.analysis_days = filters.analysisDays
 
-      const response = await api.get('/inventory/stock-coverage/', { params })
+      const response = await api.getStockCoverageEstimate(params)
       stockCoverageData.value = response.data
     } catch (err) {
       console.error('Error loading stock coverage:', err)

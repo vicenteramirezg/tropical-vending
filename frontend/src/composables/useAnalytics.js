@@ -8,6 +8,14 @@ export function useAnalytics() {
   const error = ref(null)
   const locations = ref([])
 
+  // Individual loading states for better UX
+  const loadingStates = ref({
+    locations: false,
+    revenue: false,
+    stock: false,
+    demand: false
+  })
+
   // Filter states
   const filters = ref({
     dateRange: '30',
@@ -47,6 +55,10 @@ export function useAnalytics() {
       })
   })
 
+  const isAnyLoading = computed(() => {
+    return Object.values(loadingStates.value).some(state => state) || loading.value
+  })
+
   // Helper functions
   const getStockLevelClass = (quantity) => {
     if (quantity <= 0) return 'bg-red-100 text-red-800'
@@ -71,25 +83,43 @@ export function useAnalytics() {
     return demand.toFixed(1) + '/day'
   }
 
+  // Build request parameters
+  const buildRequestParams = () => {
+    const params = {}
+    
+    if (filters.value.dateRange !== 'custom') {
+      params.days = filters.value.dateRange
+    } else {
+      params.start_date = filters.value.startDate
+      params.end_date = filters.value.endDate
+    }
+    
+    if (filters.value.location) {
+      params.location = filters.value.location
+    }
+    
+    return params
+  }
+
   // Data fetching functions
   const fetchLocations = async () => {
+    if (locations.value.length > 0) return // Already loaded
+    
+    loadingStates.value.locations = true
     try {
       const response = await api.getLocations()
       locations.value = response.data
     } catch (err) {
       console.error('Error fetching locations:', err)
+      // Don't set global error for locations as it's not critical
+    } finally {
+      loadingStates.value.locations = false
     }
   }
 
-  const fetchRevenueProfitData = async () => {
+  const fetchRevenueProfitData = async (params) => {
+    loadingStates.value.revenue = true
     try {
-      const params = {
-        days: filters.value.dateRange !== 'custom' ? filters.value.dateRange : undefined,
-        start_date: filters.value.dateRange === 'custom' ? filters.value.startDate : undefined,
-        end_date: filters.value.dateRange === 'custom' ? filters.value.endDate : undefined,
-        location: filters.value.location || undefined
-      }
-      
       const response = await api.getRevenueProfitData(params)
       
       if (!response.data) {
@@ -117,22 +147,22 @@ export function useAnalytics() {
       }
     } catch (err) {
       console.error('Error fetching revenue/profit data:', err)
-      error.value = 'Failed to load revenue and profit data'
       revenueProfitData.value = {
         revenue: { total: 0, change: 0 },
         profit: { total: 0, change: 0 },
         margin: { total: 0, change: 0 }
       }
+      throw new Error('Failed to load revenue and profit data')
+    } finally {
+      loadingStates.value.revenue = false
     }
   }
 
-  const fetchStockLevelData = async () => {
+  const fetchStockLevelData = async (params) => {
+    loadingStates.value.stock = true
     try {
-      const params = {
-        location: filters.value.location || undefined
-      }
-      
-      const response = await api.getStockLevels(params)
+      const stockParams = { location: params.location }
+      const response = await api.getStockLevels(stockParams)
       
       if (!response.data) {
         stockLevelData.value = {
@@ -148,23 +178,19 @@ export function useAnalytics() {
       }
     } catch (err) {
       console.error('Error fetching stock level data:', err)
-      error.value = 'Failed to load stock level data'
       stockLevelData.value = {
         low_stock_count: 0,
         items: []
       }
+      throw new Error('Failed to load stock level data')
+    } finally {
+      loadingStates.value.stock = false
     }
   }
 
-  const fetchDemandData = async () => {
+  const fetchDemandData = async (params) => {
+    loadingStates.value.demand = true
     try {
-      const params = {
-        days: filters.value.dateRange !== 'custom' ? filters.value.dateRange : undefined,
-        start_date: filters.value.dateRange === 'custom' ? filters.value.startDate : undefined,
-        end_date: filters.value.dateRange === 'custom' ? filters.value.endDate : undefined,
-        location: filters.value.location || undefined
-      }
-      
       const response = await api.getDemandAnalysis(params)
       console.log('Demand analysis data:', response.data)
       
@@ -200,15 +226,17 @@ export function useAnalytics() {
       }
     } catch (err) {
       console.error('Error fetching demand analysis data:', err)
-      error.value = 'Failed to load demand analysis data'
       demandData.value = {
         products: [],
         unit_counts: []
       }
+      throw new Error('Failed to load demand analysis data')
+    } finally {
+      loadingStates.value.demand = false
     }
   }
 
-  // Apply filters and refresh data
+  // Apply filters and refresh data using batch API calls
   const applyFilters = async () => {
     loading.value = true
     error.value = null
@@ -230,11 +258,26 @@ export function useAnalytics() {
         }
       }
       
-      await Promise.all([
-        fetchRevenueProfitData(),
-        fetchStockLevelData(),
-        fetchDemandData()
-      ])
+      const params = buildRequestParams()
+      
+      // Use batch API calls for better performance
+      const apiCalls = [
+        fetchRevenueProfitData(params),
+        fetchStockLevelData(params),
+        fetchDemandData(params)
+      ]
+      
+      // Execute all API calls in parallel and handle individual errors
+      const results = await Promise.allSettled(apiCalls)
+      
+      // Check if any critical API calls failed
+      const failedCalls = results.filter(result => result.status === 'rejected')
+      if (failedCalls.length > 0) {
+        console.warn(`${failedCalls.length} API calls failed:`, failedCalls.map(f => f.reason.message))
+        // Set a general error but don't prevent the page from working
+        error.value = `Some data could not be loaded. ${failedCalls.length} of ${apiCalls.length} requests failed.`
+      }
+      
     } catch (err) {
       console.error('Error refreshing data:', err)
       error.value = 'Failed to refresh analytics data'
@@ -243,16 +286,46 @@ export function useAnalytics() {
     }
   }
 
-  // Initialize data
+  // Initialize data with optimized loading
   const initialize = async () => {
+    loading.value = true
+    error.value = null
+    
     try {
+      // Load locations first (they're needed for filters)
       await fetchLocations()
+      
+      // Then load analytics data
       await applyFilters()
     } catch (err) {
       console.error('Error initializing analytics:', err)
       error.value = 'Failed to load analytics data'
     } finally {
       loading.value = false
+    }
+  }
+
+  // Refresh specific data section
+  const refreshSection = async (section) => {
+    const params = buildRequestParams()
+    
+    try {
+      switch (section) {
+        case 'revenue':
+          await fetchRevenueProfitData(params)
+          break
+        case 'stock':
+          await fetchStockLevelData(params)
+          break
+        case 'demand':
+          await fetchDemandData(params)
+          break
+        default:
+          await applyFilters()
+      }
+    } catch (err) {
+      console.error(`Error refreshing ${section}:`, err)
+      error.value = `Failed to refresh ${section} data`
     }
   }
 
@@ -265,9 +338,11 @@ export function useAnalytics() {
     revenueProfitData,
     stockLevelData,
     demandData,
+    loadingStates,
     
     // Computed
     sortedDemandCounts,
+    isAnyLoading,
     
     // Helper functions
     getStockLevelClass,
@@ -278,6 +353,7 @@ export function useAnalytics() {
     
     // Actions
     applyFilters,
-    initialize
+    initialize,
+    refreshSection
   }
 } 

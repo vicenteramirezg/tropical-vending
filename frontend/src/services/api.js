@@ -15,6 +15,52 @@ console.log('API Service - API_URL:', API_URL);
 console.log('API Service - MEDIA_URL:', MEDIA_URL);
 console.log('API Service - Environment:', import.meta.env.MODE);
 
+// Cache configuration
+const CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+const cache = new Map();
+
+// Cache utilities
+const getCacheKey = (url, params = {}) => {
+  const paramString = new URLSearchParams(params).toString();
+  return `${url}${paramString ? '?' + paramString : ''}`;
+};
+
+const isCacheValid = (cacheEntry) => {
+  return Date.now() - cacheEntry.timestamp < CACHE_TTL;
+};
+
+const getFromCache = (cacheKey) => {
+  const cacheEntry = cache.get(cacheKey);
+  if (cacheEntry && isCacheValid(cacheEntry)) {
+    console.log('Cache hit:', cacheKey);
+    return cacheEntry.data;
+  }
+  if (cacheEntry) {
+    cache.delete(cacheKey); // Remove expired entry
+  }
+  return null;
+};
+
+const setCache = (cacheKey, data) => {
+  cache.set(cacheKey, {
+    data,
+    timestamp: Date.now()
+  });
+  console.log('Cache set:', cacheKey);
+};
+
+// Cache invalidation patterns
+const invalidateCachePattern = (pattern) => {
+  const keysToDelete = [];
+  for (const key of cache.keys()) {
+    if (key.includes(pattern)) {
+      keysToDelete.push(key);
+    }
+  }
+  keysToDelete.forEach(key => cache.delete(key));
+  console.log('Cache invalidated for pattern:', pattern, 'Keys removed:', keysToDelete.length);
+};
+
 // Create an axios instance for API calls
 const apiClient = axios.create({
   baseURL: API_URL,
@@ -76,196 +122,289 @@ apiClient.interceptors.response.use(
   }
 )
 
+// Enhanced API client with caching
+const cachedGet = async (url, params = {}, skipCache = false) => {
+  const cacheKey = getCacheKey(url, params);
+  
+  if (!skipCache) {
+    const cachedData = getFromCache(cacheKey);
+    if (cachedData) {
+      return { data: cachedData };
+    }
+  }
+  
+  const response = await apiClient.get(url, { params });
+  setCache(cacheKey, response.data);
+  return response;
+};
+
+// Batch API calls utility
+const batchApiCalls = async (calls) => {
+  try {
+    const results = await Promise.all(calls);
+    return results;
+  } catch (error) {
+    console.error('Batch API call failed:', error);
+    throw error;
+  }
+};
+
 export const api = {
+  // Utility methods
+  batchApiCalls,
+  invalidateCache: invalidateCachePattern,
+  clearCache: () => {
+    cache.clear();
+    console.log('Cache cleared');
+  },
+
   // Location endpoints
-  getLocations() {
-    return apiClient.get('/locations/')
+  getLocations(skipCache = false) {
+    return cachedGet('/locations/', {}, skipCache)
   },
   getLocation(id) {
-    return apiClient.get(`/locations/${id}/`)
+    return cachedGet(`/locations/${id}/`)
   },
   createLocation(data) {
+    invalidateCachePattern('/locations');
     return apiClient.post('/locations/', data)
   },
   updateLocation(id, data) {
+    invalidateCachePattern('/locations');
     return apiClient.put(`/locations/${id}/`, data)
   },
   deleteLocation(id) {
+    invalidateCachePattern('/locations');
     return apiClient.delete(`/locations/${id}/`)
   },
-  getRoutes() {
-    return apiClient.get('/locations/routes/')
+  getRoutes(skipCache = false) {
+    return cachedGet('/locations/routes/', {}, skipCache)
   },
   
   // Machine endpoints
-  getMachines(params = {}) {
-    return apiClient.get('/machines/', { params })
+  getMachines(params = {}, skipCache = false) {
+    return cachedGet('/machines/', params, skipCache)
   },
   getMachine(id) {
-    return apiClient.get(`/machines/${id}/`)
+    return cachedGet(`/machines/${id}/`)
   },
   createMachine(data) {
+    invalidateCachePattern('/machines');
     return apiClient.post('/machines/', data)
   },
   updateMachine(id, data) {
+    invalidateCachePattern('/machines');
     return apiClient.put(`/machines/${id}/`, data)
   },
   deleteMachine(id) {
+    invalidateCachePattern('/machines');
     return apiClient.delete(`/machines/${id}/`)
   },
   
   // Product endpoints
-  getProducts(params = {}) {
-    return apiClient.get('/products/', { params })
+  getProducts(params = {}, skipCache = false) {
+    return cachedGet('/products/', params, skipCache)
   },
   getProduct(id) {
-    return apiClient.get(`/products/${id}/`)
+    return cachedGet(`/products/${id}/`)
   },
   createProduct(data) {
+    invalidateCachePattern('/products');
     return apiClient.post('/products/', data)
   },
   updateProduct(id, data) {
+    invalidateCachePattern('/products');
     return apiClient.put(`/products/${id}/`, data)
   },
   deleteProduct(id) {
+    invalidateCachePattern('/products');
     return apiClient.delete(`/products/${id}/`)
   },
   
   // Machine Item Price endpoints
-  getMachineItems(params = {}) {
-    return apiClient.get('/machine-items/', { params })
+  getMachineItems(params = {}, skipCache = false) {
+    return cachedGet('/machine-items/', params, skipCache)
   },
   getMachineItem(id) {
-    return apiClient.get(`/machine-items/${id}/`)
+    return cachedGet(`/machine-items/${id}/`)
   },
   createMachineItem(data) {
+    invalidateCachePattern('/machine-items');
     return apiClient.post('/machine-items/', data)
   },
   updateMachineItem(id, data) {
+    invalidateCachePattern('/machine-items');
     return apiClient.put(`/machine-items/${id}/`, data)
   },
   deleteMachineItem(id) {
+    invalidateCachePattern('/machine-items');
     return apiClient.delete(`/machine-items/${id}/`)
   },
   
   // Supplier endpoints
-  getSuppliers(params = {}) {
-    return apiClient.get('/suppliers/', { params })
+  getSuppliers(params = {}, skipCache = false) {
+    return cachedGet('/suppliers/', params, skipCache)
   },
   getSupplier(id) {
-    return apiClient.get(`/suppliers/${id}/`)
+    return cachedGet(`/suppliers/${id}/`)
   },
   createSupplier(data) {
+    invalidateCachePattern('/suppliers');
     return apiClient.post('/suppliers/', data)
   },
   updateSupplier(id, data) {
+    invalidateCachePattern('/suppliers');
     return apiClient.put(`/suppliers/${id}/`, data)
   },
   deleteSupplier(id) {
+    invalidateCachePattern('/suppliers');
     return apiClient.delete(`/suppliers/${id}/`)
   },
-  getActiveSuppliers() {
-    return apiClient.get('/suppliers/active/')
+  getActiveSuppliers(skipCache = false) {
+    return cachedGet('/suppliers/active/', {}, skipCache)
   },
   toggleSupplierActive(id) {
+    invalidateCachePattern('/suppliers');
     return apiClient.post(`/suppliers/${id}/toggle_active/`)
   },
   
   // Wholesale Purchase endpoints
-  getPurchases(params = {}) {
-    return apiClient.get('/purchases/', { params })
+  getPurchases(params = {}, skipCache = false) {
+    return cachedGet('/purchases/', params, skipCache)
   },
   getPurchase(id) {
-    return apiClient.get(`/purchases/${id}/`)
+    return cachedGet(`/purchases/${id}/`)
   },
   createPurchase(data) {
+    invalidateCachePattern('/purchases');
+    invalidateCachePattern('/products'); // Purchases affect product inventory
     return apiClient.post('/purchases/', data)
   },
   updatePurchase(id, data) {
+    invalidateCachePattern('/purchases');
+    invalidateCachePattern('/products');
     return apiClient.put(`/purchases/${id}/`, data)
   },
   deletePurchase(id) {
+    invalidateCachePattern('/purchases');
+    invalidateCachePattern('/products');
     return apiClient.delete(`/purchases/${id}/`)
   },
   
   // Visit endpoints
-  getVisits(params = {}) {
-    return apiClient.get('/visits/', { params })
+  getVisits(params = {}, skipCache = false) {
+    return cachedGet('/visits/', params, skipCache)
   },
   getVisit(id) {
-    return apiClient.get(`/visits/${id}/`)
+    return cachedGet(`/visits/${id}/`)
   },
   createVisit(data) {
+    invalidateCachePattern('/visits');
+    invalidateCachePattern('/analytics');
+    invalidateCachePattern('/dashboard');
+    invalidateCachePattern('/inventory');
     return apiClient.post('/visits/', data)
   },
   updateVisit(id, data) {
+    invalidateCachePattern('/visits');
+    invalidateCachePattern('/analytics');
+    invalidateCachePattern('/dashboard');
+    invalidateCachePattern('/inventory');
     return apiClient.put(`/visits/${id}/`, data)
   },
   deleteVisit(id) {
+    invalidateCachePattern('/visits');
+    invalidateCachePattern('/analytics');
+    invalidateCachePattern('/dashboard');
+    invalidateCachePattern('/inventory');
     return apiClient.delete(`/visits/${id}/`)
   },
   
   // Restock endpoints
-  getRestocks(params = {}) {
-    return apiClient.get('/restocks/', { params })
+  getRestocks(params = {}, skipCache = false) {
+    return cachedGet('/restocks/', params, skipCache)
   },
   getRestock(id) {
-    return apiClient.get(`/restocks/${id}/`)
+    return cachedGet(`/restocks/${id}/`)
   },
   createRestock(data) {
+    invalidateCachePattern('/restocks');
+    invalidateCachePattern('/analytics');
+    invalidateCachePattern('/dashboard');
+    invalidateCachePattern('/inventory');
     return apiClient.post('/restocks/', data)
   },
   updateRestock(id, data) {
+    invalidateCachePattern('/restocks');
+    invalidateCachePattern('/analytics');
+    invalidateCachePattern('/dashboard');
+    invalidateCachePattern('/inventory');
     return apiClient.put(`/restocks/${id}/`, data)
   },
   deleteRestock(id) {
+    invalidateCachePattern('/restocks');
+    invalidateCachePattern('/analytics');
+    invalidateCachePattern('/dashboard');
+    invalidateCachePattern('/inventory');
     return apiClient.delete(`/restocks/${id}/`)
   },
   
   // Restock entry endpoints
-  getRestockEntries(params = {}) {
-    return apiClient.get('/restock-entries/', { params })
+  getRestockEntries(params = {}, skipCache = false) {
+    return cachedGet('/restock-entries/', params, skipCache)
   },
   getRestockEntry(id) {
-    return apiClient.get(`/restock-entries/${id}/`)
+    return cachedGet(`/restock-entries/${id}/`)
   },
   createRestockEntry(data) {
+    invalidateCachePattern('/restock-entries');
+    invalidateCachePattern('/analytics');
+    invalidateCachePattern('/dashboard');
+    invalidateCachePattern('/inventory');
     return apiClient.post('/restock-entries/', data)
   },
   updateRestockEntry(id, data) {
+    invalidateCachePattern('/restock-entries');
+    invalidateCachePattern('/analytics');
+    invalidateCachePattern('/dashboard');
+    invalidateCachePattern('/inventory');
     return apiClient.put(`/restock-entries/${id}/`, data)
   },
   deleteRestockEntry(id) {
+    invalidateCachePattern('/restock-entries');
+    invalidateCachePattern('/analytics');
+    invalidateCachePattern('/dashboard');
+    invalidateCachePattern('/inventory');
     return apiClient.delete(`/restock-entries/${id}/`)
   },
   
-  // Analytics endpoints
-  getDashboardData() {
-    return apiClient.get('/dashboard/')
+  // Analytics endpoints - cached with shorter TTL for dynamic data
+  getDashboardData(params = {}, skipCache = false) {
+    return cachedGet('/dashboard/', params, skipCache)
   },
-  getStockLevels(params = {}) {
-    return apiClient.get('/analytics/stock-levels/', { params })
+  getStockLevels(params = {}, skipCache = false) {
+    return cachedGet('/analytics/stock-levels/', params, skipCache)
   },
-  getDemandAnalysis(params = {}) {
-    return apiClient.get('/analytics/demand/', { params })
+  getDemandAnalysis(params = {}, skipCache = false) {
+    return cachedGet('/analytics/demand/', params, skipCache)
   },
-  getRevenueProfitData(params = {}) {
-    return apiClient.get('/analytics/revenue-profit/', { params })
+  getRevenueProfitData(params = {}, skipCache = false) {
+    return cachedGet('/analytics/revenue-profit/', params, skipCache)
   },
   
-  getProductCostHistory: async (productId) => {
-    return await apiClient.get(`/product-costs/?product=${productId}`);
+  getProductCostHistory: async (productId, skipCache = false) => {
+    return await cachedGet(`/product-costs/?product=${productId}`, {}, skipCache);
   },
 
   // Inventory reporting endpoints
-  getCurrentStockReport(params = {}) {
-    return apiClient.get('/inventory/current-stock/', { params })
+  getCurrentStockReport(params = {}, skipCache = false) {
+    return cachedGet('/inventory/current-stock/', params, skipCache)
   },
-  getRestockSummary(params = {}) {
-    return apiClient.get('/inventory/restock-summary/', { params })
+  getRestockSummary(params = {}, skipCache = false) {
+    return cachedGet('/inventory/restock-summary/', params, skipCache)
   },
-  getStockCoverageEstimate(params = {}) {
-    return apiClient.get('/inventory/stock-coverage/', { params })
+  getStockCoverageEstimate(params = {}, skipCache = false) {
+    return cachedGet('/inventory/stock-coverage/', params, skipCache)
   }
 }
 

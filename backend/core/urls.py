@@ -5,7 +5,8 @@ from core.views import (
     MachineItemPriceViewSet, SupplierViewSet, WholesalePurchaseViewSet,
     VisitViewSet, VisitMachineRestockViewSet, RestockEntryViewSet,
     RegisterView, UserProfileView, ProductCostViewSet,
-    StockLevelView, DemandAnalysisView, RevenueProfitView, DashboardView
+    StockLevelView, DemandAnalysisView, RevenueProfitView, DashboardView,
+    CurrentStockReportView, RestockSummaryView, StockCoverageEstimateView
 )
 
 # Set up the router for ViewSets
@@ -34,4 +35,9 @@ urlpatterns = [
     path('analytics/demand/', DemandAnalysisView.as_view(), name='demand-analysis'),
     path('analytics/revenue-profit/', RevenueProfitView.as_view(), name='revenue-profit'),
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
+    
+    # Inventory reporting endpoints
+    path('inventory/current-stock/', CurrentStockReportView.as_view(), name='current-stock-report'),
+    path('inventory/restock-summary/', RestockSummaryView.as_view(), name='restock-summary'),
+    path('inventory/stock-coverage/', StockCoverageEstimateView.as_view(), name='stock-coverage-estimate'),
 ] 

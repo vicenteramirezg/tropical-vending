@@ -13,5 +13,8 @@ from .analytics_views import (
     StockLevelView, 
     DemandAnalysisView, 
     RevenueProfitView, 
-    DashboardView
+    DashboardView,
+    CurrentStockReportView,
+    RestockSummaryView,
+    StockCoverageEstimateView
 ) 

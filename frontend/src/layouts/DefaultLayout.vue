@@ -142,6 +142,7 @@ const navigation = [
   { name: 'Visits', href: '/restocks', routeName: 'restocks' },
   { name: 'Purchases', href: '/purchases', routeName: 'purchases' },
   { name: 'Analytics', href: '/analytics', routeName: 'analytics' },
+  { name: 'Inventory', href: '/inventory', routeName: 'inventory' },
 ]
 
 const userName = computed(() => {

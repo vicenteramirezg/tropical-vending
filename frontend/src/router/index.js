@@ -64,6 +64,12 @@ const router = createRouter({
           name: 'analytics',
           component: () => import('../views/Analytics.vue'),
           meta: { title: 'Analytics' }
+        },
+        {
+          path: 'inventory',
+          name: 'inventory',
+          component: () => import('../views/Inventory.vue'),
+          meta: { title: 'Inventory Reports' }
         }
       ]
     },

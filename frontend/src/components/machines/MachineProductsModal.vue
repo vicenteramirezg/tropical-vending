@@ -119,7 +119,24 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                           <tr v-for="product in machineProducts" :key="product.id">
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {{ product.product_name }}
+                              <div v-if="product.editingSlot">
+                                <select
+                                  v-model="product.newProduct"
+                                  class="focus:ring-primary-500 focus:border-primary-500 block w-full py-1 px-3 sm:text-sm border-gray-300 rounded-md"
+                                >
+                                  <option :value="product.product">{{ product.product_name }}</option>
+                                  <option 
+                                    v-for="availableProduct in availableProducts" 
+                                    :key="availableProduct.id" 
+                                    :value="availableProduct.id"
+                                  >
+                                    {{ availableProduct.name }}
+                                  </option>
+                                </select>
+                              </div>
+                              <div v-else>
+                                {{ product.product_name }}
+                              </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               <div class="flex items-center">
@@ -164,14 +181,14 @@
                                 @click="$emit('update-slot', product)"
                                 class="text-primary-600 hover:text-primary-900"
                               >
-                                Save Slot
+                                Save Changes
                               </button>
                               <button 
                                 v-else
                                 @click="$emit('edit-slot', product)"
                                 class="text-primary-600 hover:text-primary-900"
                               >
-                                Edit Slot
+                                Edit Product/Slot
                               </button>
                               <button 
                                 v-if="product.editing"

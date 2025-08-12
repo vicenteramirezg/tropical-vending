@@ -14,9 +14,11 @@ export function useMachineProducts() {
     slot: ''
   })
 
-  // Available products (excluding those already in the machine)
+  // Available products (excluding those already in the machine, except when editing)
   const availableProducts = computed(() => {
-    const existingProductIds = machineProducts.value.map(p => p.product)
+    const existingProductIds = machineProducts.value
+      .filter(p => !p.editingSlot) // Exclude products currently being edited
+      .map(p => p.product)
     return allProducts.value.filter(p => !existingProductIds.includes(p.id))
   })
 
@@ -49,6 +51,7 @@ export function useMachineProducts() {
           editingSlot: false,
           newPrice: item.price,
           newSlot: item.slot,
+          newProduct: item.product,
           price: typeof item.price === 'string' ? parseFloat(item.price) : item.price
         }))
       }
@@ -118,28 +121,29 @@ export function useMachineProducts() {
     }
   }
 
-  // Update product slot
+  // Update product slot and/or product
   const updateProductSlot = async (product, machineId) => {
     error.value = null
     
     try {
       await api.updateMachineItem(product.id, {
         machine: machineId,
-        product: product.product,
+        product: parseInt(product.newProduct),
         price: product.price,
         slot: parseInt(product.newSlot)
       })
       
       product.slot = parseInt(product.newSlot)
+      product.product = parseInt(product.newProduct)
       product.editingSlot = false
       
-      // Refresh machine products
+      // Refresh machine products to get updated product names and available products list
       await fetchMachineProducts(machineId)
       
       return true
     } catch (err) {
-      console.error('Error updating product slot:', err)
-      error.value = 'Failed to update product slot. Please try again.'
+      console.error('Error updating product/slot:', err)
+      error.value = 'Failed to update product/slot. Please try again.'
       
       // Check for validation/uniqueness errors
       if (err.response && err.response.data) {
@@ -173,10 +177,11 @@ export function useMachineProducts() {
     product.newPrice = product.price
   }
 
-  // Edit product slot
+  // Edit product slot and product
   const editProductSlot = (product) => {
     product.editingSlot = true
     product.newSlot = product.slot
+    product.newProduct = product.product
   }
 
   // Reset state

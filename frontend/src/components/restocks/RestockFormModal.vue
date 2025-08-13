@@ -75,7 +75,7 @@
                       name="visit_date" 
                       id="visit_date" 
                       v-model="restockForm.visit_date"
-                      class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md text-gray-900"
                       required
                     >
                   </div>

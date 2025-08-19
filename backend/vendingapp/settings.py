@@ -84,9 +84,6 @@ if os.environ.get('DATABASE_URL') or env('DATABASE_URL', default=None):
         'default': {
             **env.db('DATABASE_URL'),
             'CONN_MAX_AGE': env.int('DB_CONN_MAX_AGE', default=60),  # Keep connections alive
-            'OPTIONS': {
-                'MAX_CONNS': env.int('DB_POOL_SIZE', default=20),
-            },
         }
     }
 else:

@@ -6,9 +6,9 @@ from core.views import (
     VisitViewSet, VisitMachineRestockViewSet, RestockEntryViewSet,
     RegisterView, UserProfileView, ProductCostViewSet,
     StockLevelView, DemandAnalysisView, RevenueProfitView, DashboardView,
-    CurrentStockReportView, RestockSummaryView, StockCoverageEstimateView
+    CurrentStockReportView, RestockSummaryView, StockCoverageEstimateView,
+    BulkVisitSaveView
 )
-from core.views.bulk_visit_views import BulkVisitSaveView
 
 # Set up the router for ViewSets
 router = DefaultRouter()
@@ -24,14 +24,11 @@ router.register(r'restock-entries', RestockEntryViewSet)
 router.register(r'product-costs', ProductCostViewSet)
 
 urlpatterns = [
-    # Include router URLs
-    path('', include(router.urls)),
-    
     # User authentication endpoints
     path('register/', RegisterView.as_view(), name='register'),
     path('profile/', UserProfileView.as_view(), name='profile'),
     
-    # Bulk operations for performance optimization
+    # Bulk operations for performance optimization (MUST be before router URLs)
     path('visits/bulk-save/', BulkVisitSaveView.as_view(), name='bulk-visit-save'),
     path('visits/<int:visit_id>/bulk-update/', BulkVisitSaveView.as_view(), name='bulk-visit-update'),
     
@@ -45,4 +42,7 @@ urlpatterns = [
     path('inventory/current-stock/', CurrentStockReportView.as_view(), name='current-stock-report'),
     path('inventory/restock-summary/', RestockSummaryView.as_view(), name='restock-summary'),
     path('inventory/stock-coverage/', StockCoverageEstimateView.as_view(), name='stock-coverage-estimate'),
+    
+    # Include router URLs (MUST be last to avoid conflicts)
+    path('', include(router.urls)),
 ] 

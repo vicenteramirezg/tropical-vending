@@ -42,11 +42,14 @@ class BulkVisitSaveView(APIView):
     
     def post(self, request):
         """Create a new visit with all associated data in bulk"""
+        logger.info(f"Bulk visit save request received. Data keys: {list(request.data.keys())}")
         try:
             with transaction.atomic():
                 # Extract visit data
                 visit_data = request.data.get('visit', {})
                 machine_restocks_data = request.data.get('machine_restocks', [])
+                
+                logger.info(f"Processing visit for location {visit_data.get('location')} with {len(machine_restocks_data)} machine restocks")
                 
                 # Validate required fields
                 if not visit_data.get('location'):
@@ -86,7 +89,7 @@ class BulkVisitSaveView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    def put(self, request, visit_id):
+    def put(self, request, visit_id=None):
         """Update an existing visit with all associated data in bulk"""
         try:
             with transaction.atomic():
@@ -239,12 +242,12 @@ class BulkVisitSaveView(APIView):
                 inventory_updates[product_id] -= restocked
                 
                 # Collect machine stock updates
-                net_change = restocked - discarded
                 machine_stock_updates.append({
                     'machine_id': machine_id,
                     'product_id': product_id,
                     'stock_before': stock_before,
-                    'net_change': net_change
+                    'discarded': discarded,
+                    'restocked': restocked
                 })
         
         # Bulk create restock entries
@@ -294,9 +297,7 @@ class BulkVisitSaveView(APIView):
                 
                 if machine_item:
                     # Calculate new stock: stock_before - discarded + restocked
-                    new_stock = update['stock_before'] - (
-                        machine_stock_updates[0]['net_change'] - update['net_change']
-                    ) + update['net_change']
+                    new_stock = update['stock_before'] - update['discarded'] + update['restocked']
                     machine_item.current_stock = new_stock
                     items_to_update.append(machine_item)
             

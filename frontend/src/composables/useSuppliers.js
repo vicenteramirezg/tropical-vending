@@ -23,7 +23,8 @@ export function useSuppliers() {
     
     try {
       const response = await api.getSuppliers(params)
-      suppliers.value = response.data
+      // Handle paginated response - extract results array
+      suppliers.value = response.data.results || response.data
       console.log('Suppliers loaded:', suppliers.value.length)
     } catch (err) {
       console.error('Error fetching suppliers:', err)

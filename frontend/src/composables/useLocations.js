@@ -80,8 +80,10 @@ export function useLocations() {
     loading.value = true
     try {
       const response = await api.getLocations()
-      allLocations.value = response.data
-      locations.value = response.data
+      // Handle paginated response - extract results array
+      const locationsData = response.data.results || response.data
+      allLocations.value = locationsData
+      locations.value = locationsData
       
       // After locations are loaded, fetch machines and routes
       await Promise.all([fetchMachines(), fetchRoutes()])
@@ -96,7 +98,8 @@ export function useLocations() {
   const fetchMachines = async () => {
     try {
       const response = await api.getMachines()
-      machines.value = response.data
+      // Handle paginated response - extract results array
+      machines.value = response.data.results || response.data
     } catch (err) {
       console.error('Error fetching machines:', err)
     }

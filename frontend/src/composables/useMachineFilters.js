@@ -18,10 +18,12 @@ export function useMachineFilters() {
   const fetchLocations = async () => {
     try {
       const response = await api.getLocations()
-      locations.value = response.data
+      // Handle paginated response - extract results array
+      const locationsData = response.data.results || response.data
+      locations.value = locationsData
       
       // Create lookup objects for location names and info
-      response.data.forEach(location => {
+      locationsData.forEach(location => {
         locationNames.value[location.id] = location.name
         locationInfo.value[location.id] = location
       })

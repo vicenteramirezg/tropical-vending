@@ -91,7 +91,8 @@ export function useMachines() {
       if (filters.machineType) params.machine_type = filters.machineType
       
       const response = await api.getMachines(params)
-      machines.value = response.data
+      // Handle paginated response - extract results array
+      machines.value = response.data.results || response.data
     } catch (err) {
       console.error('Error fetching machines:', err)
       error.value = 'Failed to load machines. Please try again.'
@@ -113,14 +114,17 @@ export function useMachines() {
     try {
       // Fetch machines for this location
       const machinesResponse = await api.getMachines({ location: locationId })
-      const machines = machinesResponse.data
+      // Handle paginated response - extract results array
+      const machines = machinesResponse.data.results || machinesResponse.data
       
       // For each machine, fetch its products
       const machinesWithProducts = await Promise.all(
         machines.map(async (machine) => {
           try {
             const productsResponse = await api.getMachineItems({ machine: machine.id })
-            const products = productsResponse.data.map(item => ({
+            // Handle paginated response - extract results array
+            const productsData = productsResponse.data.results || productsResponse.data
+            const products = productsData.map(item => ({
               id: item.product,
               name: item.product_name,
               slot: item.slot,

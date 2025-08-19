@@ -51,7 +51,9 @@ export function usePurchases() {
     try {
       const response = await api.getPurchases()
       console.log('Purchases data:', response.data)
-      purchases.value = response.data.map(purchase => {
+      // Handle paginated response - extract results array
+      const purchasesData = response.data.results || response.data
+      purchases.value = purchasesData.map(purchase => {
         const unitCost = purchase.cost_per_unit || 
                         (purchase.unit_cost) || 
                         (purchase.total_cost && purchase.quantity ? purchase.total_cost / purchase.quantity : 0)
@@ -76,7 +78,8 @@ export function usePurchases() {
   const fetchProducts = async () => {
     try {
       const response = await api.getProducts()
-      products.value = response.data
+      // Handle paginated response - extract results array
+      products.value = response.data.results || response.data
     } catch (err) {
       console.error('Error fetching products:', err)
     }
@@ -85,7 +88,8 @@ export function usePurchases() {
   const fetchSuppliers = async () => {
     try {
       const response = await api.getActiveSuppliers()
-      suppliers.value = response.data
+      // Handle paginated response - extract results array
+      suppliers.value = response.data.results || response.data
     } catch (err) {
       console.error('Error fetching suppliers:', err)
     }

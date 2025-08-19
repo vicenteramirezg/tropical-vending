@@ -11,7 +11,9 @@ export function useRestocks() {
     error.value = null
     try {
       const response = await api.getVisits()
-      restocks.value = response.data.map(visit => ({
+      // Handle paginated response - extract results array
+      const visitsData = response.data.results || response.data
+      restocks.value = visitsData.map(visit => ({
         id: visit.id,
         location_id: visit.location,
         location_name: visit.location_name,
@@ -61,18 +63,21 @@ export function useRestocks() {
     try {
       // Fetch the machine restocks for this visit
       const machineRestocksResponse = await api.getRestocks({ visit: visitId })
-      const machineRestocks = machineRestocksResponse.data
+      // Handle paginated response - extract results array
+      const machineRestocks = machineRestocksResponse.data.results || machineRestocksResponse.data
       
       // Fetch entries for each machine restock
       let allEntries = []
       
       for (const machineRestock of machineRestocks) {
         const entriesResponse = await api.getRestockEntries({ visit_machine_restock: machineRestock.id })
-        const entriesData = entriesResponse.data
+        // Handle paginated response - extract results array
+        const entriesData = entriesResponse.data.results || entriesResponse.data
         
         // Get machine item info to get the slot number for each product
         const machineItemsResponse = await api.getMachineItems({ machine: machineRestock.machine })
-        const machineItems = machineItemsResponse.data
+        // Handle paginated response - extract results array
+        const machineItems = machineItemsResponse.data.results || machineItemsResponse.data
         
         // Add slot info to each entry
         const entriesWithSlot = entriesData.map(entry => {

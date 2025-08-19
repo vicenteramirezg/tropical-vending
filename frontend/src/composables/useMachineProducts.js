@@ -26,7 +26,8 @@ export function useMachineProducts() {
   const fetchAllProducts = async () => {
     try {
       const response = await api.getProducts()
-      allProducts.value = response.data
+      // Handle paginated response - extract results array
+      allProducts.value = response.data.results || response.data
     } catch (err) {
       console.error('Error fetching products:', err)
       error.value = 'Failed to load products. Please try again.'
@@ -43,7 +44,9 @@ export function useMachineProducts() {
       const response = await api.getMachineItems(params)
       
       if (response && response.data) {
-        const filteredItems = response.data.filter(item => item.machine == machineId)
+        // Handle paginated response - extract results array
+        const itemsData = response.data.results || response.data
+        const filteredItems = itemsData.filter(item => item.machine == machineId)
         
         machineProducts.value = filteredItems.map(item => ({
           ...item,

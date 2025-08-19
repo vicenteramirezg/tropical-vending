@@ -16,7 +16,8 @@ export function useProducts() {
     
     try {
       const response = await api.getProducts()
-      products.value = response.data
+      // Handle paginated response - extract results array
+      products.value = response.data.results || response.data
       
       // Log product data for debugging
       console.log('Products loaded:', products.value.length)

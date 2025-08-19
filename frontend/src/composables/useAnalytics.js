@@ -108,7 +108,8 @@ export function useAnalytics() {
     loadingStates.value.locations = true
     try {
       const response = await api.getLocations()
-      locations.value = response.data
+      // Handle paginated response - extract results array
+      locations.value = response.data.results || response.data
     } catch (err) {
       console.error('Error fetching locations:', err)
       // Don't set global error for locations as it's not critical

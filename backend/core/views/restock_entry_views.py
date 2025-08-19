@@ -1,10 +1,15 @@
 from rest_framework import viewsets, filters
+from django.db import models
 from core.models import RestockEntry
 from core.serializers import RestockEntrySerializer
 
 
 class RestockEntryViewSet(viewsets.ModelViewSet):
-    queryset = RestockEntry.objects.all().order_by('-visit_machine_restock__visit__visit_date')
+    queryset = RestockEntry.objects.select_related(
+        'visit_machine_restock__visit__location',
+        'visit_machine_restock__machine',
+        'product'
+    ).order_by('-visit_machine_restock__visit__visit_date')
     serializer_class = RestockEntrySerializer
     filterset_fields = ['visit_machine_restock', 'product']
     
@@ -20,20 +25,28 @@ class RestockEntryViewSet(viewsets.ModelViewSet):
         # Calculate the net change in inventory
         inventory_change = old_restocked - new_instance.restocked
         
+        # Use bulk update with F expressions for atomic operations
         if inventory_change != 0:
-            # Update product inventory based on the change
-            new_instance.product.update_inventory(inventory_change)
+            # Update product inventory using F expression for atomic update
+            models.Product.objects.filter(id=new_instance.product.id).update(
+                inventory_quantity=models.F('inventory_quantity') + inventory_change
+            )
             
-        # Update the machine item stock
+        # Update the machine item stock using bulk operations
         try:
             machine = new_instance.visit_machine_restock.machine
-            machine_item = machine.item_prices.get(product=new_instance.product)
             
             # Calculate the net change to be applied to current stock:
             # Subtract old values and add new values
             stock_change = (new_instance.restocked - old_restocked) - (new_instance.discarded - old_discarded)
             
-            machine_item.current_stock = machine_item.current_stock + stock_change
-            machine_item.save(update_fields=['current_stock', 'updated_at'])
-        except machine.item_prices.model.DoesNotExist:
-            pass 
+            if stock_change != 0:
+                # Use F expression for atomic update
+                models.MachineItemPrice.objects.filter(
+                    machine=machine,
+                    product=new_instance.product
+                ).update(
+                    current_stock=models.F('current_stock') + stock_change
+                )
+        except Exception:
+            pass  # If machine item doesn't exist, skip update 

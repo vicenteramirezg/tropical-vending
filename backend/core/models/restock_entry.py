@@ -18,29 +18,50 @@ class RestockEntry(models.Model):
         # Track if this is a new record (no ID yet) or an update
         is_new = self.pk is None
         
-        # If this is an update, we'll skip inventory logic as it's handled in the viewset
-        # Only handle inventory for new entries
+        # Skip automatic inventory updates if bulk_save flag is set
+        # This allows bulk operations to handle inventory updates more efficiently
+        skip_inventory_update = kwargs.pop('skip_inventory_update', False)
         
         # Call the parent save method
         super().save(*args, **kwargs)
         
-        # Only perform these actions for new entries, not updates
-        if is_new:
-            # Update current stock in MachineItemPrice
+        # Only perform these actions for new entries and if not skipping updates
+        if is_new and not skip_inventory_update:
+            # Update current stock in MachineItemPrice using F expression for atomic update
             machine = self.visit_machine_restock.machine
             try:
-                machine_item = machine.item_prices.get(product=self.product)
-                machine_item.current_stock = self.stock_before - self.discarded + self.restocked
-                machine_item.save(update_fields=['current_stock', 'updated_at'])
-            except machine.item_prices.model.DoesNotExist:
+                from django.db import models
+                # Use F expression to avoid race conditions
+                models.MachineItemPrice.objects.filter(
+                    machine=machine,
+                    product=self.product
+                ).update(
+                    current_stock=self.stock_before - self.discarded + self.restocked
+                )
+            except Exception:
                 # If the product doesn't exist in the machine yet, we don't update anything
                 pass
             
-            # Update product warehouse inventory - only for new entries
+            # Update product warehouse inventory using F expression
             try:
-                # For new entries, subtract the full restocked amount from inventory
-                self.product.update_inventory(-self.restocked)
-            except ValueError as e:
-                # Handle case where there's not enough inventory
-                # You might want to add custom error handling here
-                raise 
+                from django.db import models
+                # Use F expression for atomic inventory update
+                updated_rows = models.Product.objects.filter(
+                    id=self.product.id,
+                    inventory_quantity__gte=self.restocked  # Ensure sufficient inventory
+                ).update(
+                    inventory_quantity=models.F('inventory_quantity') - self.restocked
+                )
+                
+                if updated_rows == 0:
+                    # Check if product exists and has insufficient inventory
+                    product = models.Product.objects.get(id=self.product.id)
+                    if product.inventory_quantity < self.restocked:
+                        raise ValueError(f"Insufficient inventory. Available: {product.inventory_quantity}, Required: {self.restocked}")
+                    else:
+                        raise ValueError("Product not found")
+                        
+            except models.Product.DoesNotExist:
+                raise ValueError("Product not found")
+            except ValueError:
+                raise  # Re-raise inventory errors 

@@ -33,6 +33,7 @@
       :locations="filteredLocations"
       :routes="routes"
       :location-machines="locationMachines"
+      :saving="saving"
       @close="showModal = false"
       @save="handleSaveRestock"
       @route-change="handleRouteChange"
@@ -63,7 +64,7 @@ import { useAuthStore } from '../store/auth'
 import { useRestocks } from '../composables/useRestocks'
 import { useLocations } from '../composables/useLocations'
 import { useMachines } from '../composables/useMachines'
-import { useRestockForm } from '../composables/useRestockForm'
+import { useRestockFormOptimized } from '../composables/useRestockFormOptimized'
 
 // Components
 import RestockList from '../components/restocks/RestockList.vue'
@@ -76,7 +77,7 @@ const authStore = useAuthStore()
 const { restocks, loading, error: restocksError, fetchRestocks, createVisit, updateVisit, deleteVisit, getVisitDetails } = useRestocks()
 const { filteredLocations, routes, selectedRoute, locationSearchText, fetchLocations, fetchRoutes, resetFilters } = useLocations()
 const { locationMachines, fetchLocationMachines, updateMachineProductData, resetMachineData } = useMachines()
-const { restockForm, isEditing, selectedLocation, initializeForm, saveRestock, resetForm } = useRestockForm()
+const { restockForm, isEditing, selectedLocation, saving, initializeForm, saveRestockOptimized, resetForm } = useRestockFormOptimized()
 
 // Modal states
 const showModal = ref(false)
@@ -147,7 +148,7 @@ const handleConfirmDelete = async () => {
 }
 
 const handleSaveRestock = async () => {
-  const success = await saveRestock(locationMachines.value, createVisit, updateVisit)
+  const success = await saveRestockOptimized(locationMachines.value)
   if (success) {
     showModal.value = false
     await fetchRestocks()

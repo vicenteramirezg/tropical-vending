@@ -312,6 +312,22 @@ export const api = {
     invalidateCachePattern('/inventory');
     return apiClient.put(`/visits/${id}/`, data)
   },
+  
+  // Bulk visit operations for performance optimization
+  createVisitBulk(data) {
+    invalidateCachePattern('/visits');
+    invalidateCachePattern('/analytics');
+    invalidateCachePattern('/dashboard');
+    invalidateCachePattern('/inventory');
+    return apiClient.post('/visits/bulk-save/', data)
+  },
+  updateVisitBulk(id, data) {
+    invalidateCachePattern('/visits');
+    invalidateCachePattern('/analytics');
+    invalidateCachePattern('/dashboard');
+    invalidateCachePattern('/inventory');
+    return apiClient.put(`/visits/${id}/bulk-update/`, data)
+  },
   deleteVisit(id) {
     invalidateCachePattern('/visits');
     invalidateCachePattern('/analytics');

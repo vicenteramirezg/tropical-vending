@@ -8,6 +8,7 @@ from core.views import (
     StockLevelView, DemandAnalysisView, RevenueProfitView, DashboardView,
     CurrentStockReportView, RestockSummaryView, StockCoverageEstimateView
 )
+from core.views.bulk_visit_views import BulkVisitSaveView
 
 # Set up the router for ViewSets
 router = DefaultRouter()
@@ -29,6 +30,10 @@ urlpatterns = [
     # User authentication endpoints
     path('register/', RegisterView.as_view(), name='register'),
     path('profile/', UserProfileView.as_view(), name='profile'),
+    
+    # Bulk operations for performance optimization
+    path('visits/bulk-save/', BulkVisitSaveView.as_view(), name='bulk-visit-save'),
+    path('visits/<int:visit_id>/bulk-update/', BulkVisitSaveView.as_view(), name='bulk-visit-update'),
     
     # Analytics endpoints
     path('analytics/stock-levels/', StockLevelView.as_view(), name='stock-levels'),

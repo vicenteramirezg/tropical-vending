@@ -79,9 +79,15 @@ WSGI_APPLICATION = 'vendingapp.wsgi.application'
 # Support for both SQLite (development) and PostgreSQL (production)
 # Check if we're running on Railway by looking for DATABASE_URL
 if os.environ.get('DATABASE_URL') or env('DATABASE_URL', default=None):
-    # If DATABASE_URL is provided, use PostgreSQL
+    # If DATABASE_URL is provided, use PostgreSQL with optimizations
     DATABASES = {
-        'default': env.db('DATABASE_URL')
+        'default': {
+            **env.db('DATABASE_URL'),
+            'CONN_MAX_AGE': env.int('DB_CONN_MAX_AGE', default=60),  # Keep connections alive
+            'OPTIONS': {
+                'MAX_CONNS': env.int('DB_POOL_SIZE', default=20),
+            },
+        }
     }
 else:
     # Otherwise fallback to SQLite for local development
@@ -89,6 +95,9 @@ else:
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
+            'OPTIONS': {
+                'timeout': 20,  # Increase timeout for SQLite
+            }
         }
     }
 
@@ -147,6 +156,14 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 50,  # Limit default page size for better performance
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ] if not DEBUG else [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
     ],
 }
 

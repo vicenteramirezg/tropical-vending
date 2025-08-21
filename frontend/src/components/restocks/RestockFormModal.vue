@@ -162,7 +162,7 @@
 
             <!-- Modal Content (Scrollable) -->
             <div class="modal-scrollable bg-white px-4 py-4 sm:px-6">
-              <div class="space-y-4">
+              <div class="space-y-6">
                 <!-- Route Selection -->
                 <div>
                   <label for="route" class="block text-sm font-medium text-gray-700">Filter by Route (Optional)</label>

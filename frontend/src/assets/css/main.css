@@ -154,6 +154,22 @@
   .overflow-y-auto .space-y-4 > * + * {
     margin-top: 1rem;
   }
+  
+  /* Additional height constraints for better modal integration */
+  @media (max-height: 600px) {
+    .max-h-\[25vh\] {
+      max-height: 20vh !important;
+    }
+    .sm\:max-h-\[30vh\] {
+      max-height: 25vh !important;
+    }
+  }
+  
+  @media (min-height: 900px) {
+    .lg\:max-h-\[32vh\] {
+      max-height: 35vh !important;
+    }
+  }
 }
 
 @layer utilities {

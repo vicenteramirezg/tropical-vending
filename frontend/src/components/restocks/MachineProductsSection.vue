@@ -18,7 +18,7 @@
         </div>
       </div>
     </div>
-    <div class="flex-1 overflow-y-auto max-h-[50vh] sm:max-h-[60vh] border border-gray-200 rounded-lg">
+    <div class="flex-1 overflow-y-auto min-h-[200px] max-h-[25vh] sm:max-h-[30vh] lg:max-h-[32vh] border border-gray-200 rounded-lg">
       <div class="space-y-4 p-4">
       <div v-for="machine in machines" :key="machine.id" :class="['border rounded-lg p-3 sm:p-4', getMachineStatusClass(machine)]">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-2">

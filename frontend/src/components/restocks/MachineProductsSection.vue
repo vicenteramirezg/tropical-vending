@@ -1,18 +1,25 @@
 <template>
-  <div>
+  <div class="flex flex-col">
     <h4 class="text-sm font-medium text-gray-700 mb-2">Machines at Location</h4>
-    <div class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+    <div class="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex-shrink-0">
       <div class="flex items-center">
         <svg class="h-5 w-5 text-blue-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
         </svg>
-        <div class="text-sm text-blue-700">
+        <div class="text-sm text-blue-700 flex-1">
           <p class="font-medium">Partial Restock Allowed</p>
           <p class="text-blue-600">You can restock only the machines/products you need. Leave others empty to skip them.</p>
         </div>
+        <div v-if="totalProductCount > 10" class="ml-3 text-xs text-blue-600 hidden sm:flex items-center">
+          <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          Scroll to see all products
+        </div>
       </div>
     </div>
-    <div class="space-y-4">
+    <div class="flex-1 overflow-y-auto max-h-[50vh] sm:max-h-[60vh] border border-gray-200 rounded-lg">
+      <div class="space-y-4 p-4">
       <div v-for="machine in machines" :key="machine.id" :class="['border rounded-lg p-3 sm:p-4', getMachineStatusClass(machine)]">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-2">
           <h5 class="text-sm font-medium text-gray-900 mb-2 sm:mb-0">
@@ -147,15 +154,22 @@
           </div>
         </div>
       </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import ResponsiveNumberInput from '../common/ResponsiveNumberInput.vue'
 
 const props = defineProps({
   machines: Array
+})
+
+// Calculate total number of products across all machines
+const totalProductCount = computed(() => {
+  return props.machines?.reduce((total, machine) => total + (machine.products?.length || 0), 0) || 0
 })
 
 // Update product value method for the new component

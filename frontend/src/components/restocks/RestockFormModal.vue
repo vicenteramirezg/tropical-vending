@@ -136,137 +136,150 @@
     </div>
 
     <!-- Desktop/Tablet: Modal overlay layout -->
-    <div class="hidden sm:flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="$emit('close')"></div>
-      
-      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-      
-      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full max-h-[90vh] flex flex-col">
-        <form @submit.prevent="$emit('save')" novalidate class="flex flex-col h-full">
-          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 flex-1 overflow-y-auto">
-            <div class="sm:flex sm:items-start">
-              <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+    <div class="hidden sm:block modal-overlay">
+      <div class="flex items-center justify-center min-h-full pt-4 px-4 pb-20 text-center">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="$emit('close')"></div>
+        
+        <div class="modal-content inline-block align-bottom bg-white rounded-lg text-left shadow-xl transform transition-all my-8 align-middle max-w-5xl w-full">
+          <form @submit.prevent="$emit('save')" novalidate class="flex flex-col h-full">
+            <!-- Modal Header (Fixed) -->
+            <div class="bg-white px-4 pt-5 pb-4 sm:px-6 border-b border-gray-200 flex-shrink-0">
+              <div class="flex items-center justify-between">
                 <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
                   {{ isEditing ? 'Edit Visit' : 'Record New Visit' }}
                 </h3>
-                <div class="mt-4 space-y-4">
-                  <!-- Route Selection -->
-                  <div>
-                    <label for="route" class="block text-sm font-medium text-gray-700">Filter by Route (Optional)</label>
-                    <select
-                      id="route"
-                      name="route"
-                      :value="selectedRoute"
-                      @change="$emit('route-change', $event.target.value)"
-                      class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
-                    >
-                      <option value="">All Routes</option>
-                      <option value="unassigned">Unassigned</option>
-                      <option v-for="route in routes" :key="route" :value="route">
-                        {{ route }}
-                      </option>
-                    </select>
-                  </div>
-                  
-                  <!-- Location Search -->
-                  <div>
-                    <label for="location-search" class="block text-sm font-medium text-gray-700">Search Location</label>
-                    <input
-                      id="location-search"
-                      name="location-search"
-                      type="text"
-                      :value="locationSearchText"
-                      @input="$emit('location-search', $event.target.value)"
-                      placeholder="Type to search locations..."
-                      class="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
-                    >
-                  </div>
-                  
-                  <!-- Location Selection -->
-                  <div>
-                    <label for="location" class="block text-sm font-medium text-gray-700">
-                      Location
-                      <span class="text-xs text-gray-500 ml-1">({{ locations.length }} locations)</span>
-                    </label>
-                    <select
-                      id="location"
-                      name="location"
-                      :value="selectedLocation"
-                      @change="$emit('location-change', $event.target.value)"
-                      class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
-                      required
-                    >
-                      <option value="" disabled>Select a location</option>
-                      <option v-for="location in locations" :key="location.id" :value="location.id">
-                        {{ location.name }}
-                        <span v-if="location.route" class="text-gray-500"> - {{ location.route }}</span>
-                      </option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label for="visit_date" class="block text-sm font-medium text-gray-700">Visit Date</label>
-                    <input 
-                      type="datetime-local" 
-                      name="visit_date" 
-                      id="visit_date" 
-                      v-model="restockForm.visit_date"
-                      class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md text-gray-900"
-                      required
-                    >
-                  </div>
+                <button 
+                  type="button"
+                  @click="$emit('close')"
+                  class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
+                >
+                  <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
 
-                  <!-- Machine Products Section -->
-                  <MachineProductsSection
-                    v-if="locationMachines.length > 0"
-                    :machines="locationMachines"
-                  />
-                  
-                  <div>
-                    <label for="notes" class="block text-sm font-medium text-gray-700">Visit Notes</label>
-                    <textarea 
-                      id="notes" 
-                      name="notes" 
-                      rows="2" 
-                      v-model="restockForm.notes"
-                      class="shadow-sm focus:ring-primary-500 focus:border-primary-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                    ></textarea>
-                  </div>
+            <!-- Modal Content (Scrollable) -->
+            <div class="modal-scrollable bg-white px-4 py-4 sm:px-6">
+              <div class="space-y-4">
+                <!-- Route Selection -->
+                <div>
+                  <label for="route" class="block text-sm font-medium text-gray-700">Filter by Route (Optional)</label>
+                  <select
+                    id="route"
+                    name="route"
+                    :value="selectedRoute"
+                    @change="$emit('route-change', $event.target.value)"
+                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                  >
+                    <option value="">All Routes</option>
+                    <option value="unassigned">Unassigned</option>
+                    <option v-for="route in routes" :key="route" :value="route">
+                      {{ route }}
+                    </option>
+                  </select>
+                </div>
+                
+                <!-- Location Search -->
+                <div>
+                  <label for="location-search" class="block text-sm font-medium text-gray-700">Search Location</label>
+                  <input
+                    id="location-search"
+                    name="location-search"
+                    type="text"
+                    :value="locationSearchText"
+                    @input="$emit('location-search', $event.target.value)"
+                    placeholder="Type to search locations..."
+                    class="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                  >
+                </div>
+                
+                <!-- Location Selection -->
+                <div>
+                  <label for="location" class="block text-sm font-medium text-gray-700">
+                    Location
+                    <span class="text-xs text-gray-500 ml-1">({{ locations.length }} locations)</span>
+                  </label>
+                  <select
+                    id="location"
+                    name="location"
+                    :value="selectedLocation"
+                    @change="$emit('location-change', $event.target.value)"
+                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                    required
+                  >
+                    <option value="" disabled>Select a location</option>
+                    <option v-for="location in locations" :key="location.id" :value="location.id">
+                      {{ location.name }}
+                      <span v-if="location.route" class="text-gray-500"> - {{ location.route }}</span>
+                    </option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label for="visit_date" class="block text-sm font-medium text-gray-700">Visit Date</label>
+                  <input 
+                    type="datetime-local" 
+                    name="visit_date" 
+                    id="visit_date" 
+                    v-model="restockForm.visit_date"
+                    class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md text-gray-900"
+                    required
+                  >
+                </div>
+
+                <!-- Machine Products Section -->
+                <div v-if="locationMachines.length > 0">
+                  <MachineProductsSection :machines="locationMachines" />
+                </div>
+                
+                <div>
+                  <label for="notes" class="block text-sm font-medium text-gray-700">Visit Notes</label>
+                  <textarea 
+                    id="notes" 
+                    name="notes" 
+                    rows="2" 
+                    v-model="restockForm.notes"
+                    class="shadow-sm focus:ring-primary-500 focus:border-primary-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                  ></textarea>
                 </div>
               </div>
             </div>
-          </div>
-          
-          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t">
-            <button 
-              type="submit"
-              :disabled="saving"
-              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span v-if="saving" class="inline-flex items-center">
-                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Saving...
-              </span>
-              <span v-else>Save Visit</span>
-            </button>
-            <button 
-              type="button"
-              @click="$emit('close')"
-              class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+            
+            <!-- Modal Footer (Fixed) -->
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t flex-shrink-0">
+              <button 
+                type="submit"
+                :disabled="saving"
+                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span v-if="saving" class="inline-flex items-center">
+                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Saving...
+                </span>
+                <span v-else>Save Visit</span>
+              </button>
+              <button 
+                type="button"
+                @click="$emit('close')"
+                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { watch, onMounted, onUnmounted } from 'vue'
 import MachineProductsSection from './MachineProductsSection.vue'
 
 const props = defineProps({
@@ -283,4 +296,41 @@ const props = defineProps({
 })
 
 defineEmits(['close', 'save', 'route-change', 'location-search', 'location-change'])
+
+// Prevent background scrolling when modal is open
+const preventBodyScroll = () => {
+  // Store original overflow style
+  const originalOverflow = document.body.style.overflow
+  
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden'
+  
+  // Return cleanup function
+  return () => {
+    document.body.style.overflow = originalOverflow
+  }
+}
+
+// Watch for modal show/hide to manage body scroll
+let cleanupBodyScroll = null
+
+watch(() => props.show, (newShow) => {
+  if (newShow) {
+    // Modal is opening - prevent background scroll
+    cleanupBodyScroll = preventBodyScroll()
+  } else {
+    // Modal is closing - restore background scroll
+    if (cleanupBodyScroll) {
+      cleanupBodyScroll()
+      cleanupBodyScroll = null
+    }
+  }
+}, { immediate: true })
+
+// Cleanup on component unmount
+onUnmounted(() => {
+  if (cleanupBodyScroll) {
+    cleanupBodyScroll()
+  }
+})
 </script> 

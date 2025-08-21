@@ -35,6 +35,42 @@
     font-size: 16px; /* Prevents zoom on iOS */
   }
   
+  /* Modal scroll containment and focus trapping */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .modal-content {
+    position: relative;
+    z-index: 51;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .modal-scrollable {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scrolling on iOS */
+    scroll-behavior: smooth;
+  }
+  
+  /* Prevent body scroll when modal is open */
+  body.modal-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
+  
   /* Custom utilities for mobile forms */
   @media (max-width: 640px) {
     .mobile-form-input {
@@ -55,6 +91,37 @@
       -webkit-appearance: none;
       margin: 0;
       display: none;
+    }
+  }
+  
+  /* Desktop/tablet modal improvements */
+  @media (min-width: 641px) {
+    .modal-content {
+      max-height: 85vh;
+    }
+    
+    .modal-scrollable {
+      /* Custom scrollbar for better UX */
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e0 #f7fafc;
+    }
+    
+    .modal-scrollable::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .modal-scrollable::-webkit-scrollbar-track {
+      background: #f7fafc;
+      border-radius: 3px;
+    }
+    
+    .modal-scrollable::-webkit-scrollbar-thumb {
+      background: #cbd5e0;
+      border-radius: 3px;
+    }
+    
+    .modal-scrollable::-webkit-scrollbar-thumb:hover {
+      background: #a0aec0;
     }
   }
 }

@@ -13,9 +13,9 @@
       </div>
     </div>
     <div class="space-y-4">
-      <div v-for="machine in machines" :key="machine.id" :class="['border rounded-lg p-4', getMachineStatusClass(machine)]">
-        <div class="flex justify-between items-center mb-2">
-          <h5 class="text-sm font-medium text-gray-900">
+      <div v-for="machine in machines" :key="machine.id" :class="['border rounded-lg p-3 sm:p-4', getMachineStatusClass(machine)]">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-2">
+          <h5 class="text-sm font-medium text-gray-900 mb-2 sm:mb-0">
             {{ machine.name }} ({{ machine.machine_type }} {{ machine.model }})
             <span v-if="hasRestockDataForMachine(machine)" class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
               Will be restocked
@@ -29,11 +29,73 @@
           </div>
         </div>
         
-        <div class="space-y-2">
+        <div class="space-y-3 sm:space-y-2">
           <div v-if="machine.products.length === 0" class="text-sm text-gray-500 italic p-2 text-center">
             No products in this machine
           </div>
-          <div v-for="product in machine.products" :key="product.id" :class="['grid grid-cols-12 gap-4 items-center', getProductStatusClass(product)]">
+          
+          <!-- Mobile Layout -->
+          <div v-for="product in machine.products" :key="product.id" class="sm:hidden">
+            <div :class="['border rounded-lg p-3', getProductStatusClass(product)]">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-2">
+                  <div class="text-sm font-medium text-gray-900 bg-gray-100 rounded-md px-2 py-1 min-w-[2rem] text-center">
+                    {{ product.slot }}
+                  </div>
+                  <div class="text-sm font-medium text-gray-900">
+                    {{ product.name }}
+                    <span v-if="hasRestockDataForProduct(product)" class="ml-1 inline-flex items-center w-2 h-2 bg-green-500 rounded-full" title="Will be restocked"></span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="space-y-3">
+                <!-- Current Stock -->
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Current Stock</label>
+                  <ResponsiveNumberInput
+                    v-model="product.stock_before"
+                    :min="0"
+                    placeholder="0"
+                    label="Current Stock"
+                    @update:model-value="(value) => updateProductValue(product, 'stock_before', value)"
+                  />
+                </div>
+                
+                <!-- Discarded Amount -->
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Discarded Amount</label>
+                  <ResponsiveNumberInput
+                    v-model="product.discarded"
+                    :min="0"
+                    placeholder="0"
+                    label="Discarded Amount"
+                    @update:model-value="(value) => updateProductValue(product, 'discarded', value)"
+                  />
+                </div>
+                
+                <!-- Restock Amount -->
+                <div>
+                  <label class="block text-xs text-gray-500 mb-1">Restock Amount</label>
+                  <ResponsiveNumberInput
+                    v-model="product.restocked"
+                    :min="0"
+                    placeholder="0"
+                    label="Restock Amount"
+                    @update:model-value="(value) => updateProductValue(product, 'restocked', value)"
+                  />
+                </div>
+                
+                <!-- New Total -->
+                <div class="text-sm text-gray-500 font-medium pt-2 border-t">
+                  New Total: {{ calculateNewTotal(product) }}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Desktop/Tablet Layout -->
+          <div v-for="product in machine.products" :key="product.id" :class="['hidden sm:grid grid-cols-12 gap-4 items-center', getProductStatusClass(product)]">
             <div class="col-span-1 text-sm font-medium text-gray-900 text-center bg-gray-100 rounded-md py-1">
               {{ product.slot }}
             </div>
@@ -45,91 +107,37 @@
             <!-- Current Stock -->
             <div class="col-span-2">
               <label class="block text-xs text-gray-500">Current Stock</label>
-              <div class="mt-1 flex rounded-md shadow-sm">
-                <button 
-                  type="button"
-                  @click="decrementValue(product, 'stock_before')"
-                  class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <span class="sr-only">Decrease</span>
-                  -
-                </button>
-                <input 
-                  type="number" 
-                  v-model="product.stock_before"
-                  min="0"
-                  class="focus:ring-primary-500 focus:border-primary-500 block w-full border-gray-300 rounded-none text-center sm:text-sm"
-                  placeholder="0"
-                >
-                <button 
-                  type="button"
-                  @click="incrementValue(product, 'stock_before')"
-                  class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <span class="sr-only">Increase</span>
-                  +
-                </button>
-              </div>
+              <ResponsiveNumberInput
+                v-model="product.stock_before"
+                :min="0"
+                placeholder="0"
+                label="Current Stock"
+                @update:model-value="(value) => updateProductValue(product, 'stock_before', value)"
+              />
             </div>
             
             <!-- Discarded Amount -->
             <div class="col-span-2">
               <label class="block text-xs text-gray-500">Discarded Amount</label>
-              <div class="mt-1 flex rounded-md shadow-sm">
-                <button 
-                  type="button"
-                  @click="decrementValue(product, 'discarded')"
-                  class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <span class="sr-only">Decrease</span>
-                  -
-                </button>
-                <input 
-                  type="number" 
-                  v-model="product.discarded"
-                  min="0"
-                  class="focus:ring-primary-500 focus:border-primary-500 block w-full border-gray-300 rounded-none text-center sm:text-sm"
-                  placeholder="0"
-                >
-                <button 
-                  type="button"
-                  @click="incrementValue(product, 'discarded')"
-                  class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <span class="sr-only">Increase</span>
-                  +
-                </button>
-              </div>
+              <ResponsiveNumberInput
+                v-model="product.discarded"
+                :min="0"
+                placeholder="0"
+                label="Discarded Amount"
+                @update:model-value="(value) => updateProductValue(product, 'discarded', value)"
+              />
             </div>
             
             <!-- Restock Amount -->
             <div class="col-span-2">
               <label class="block text-xs text-gray-500">Restock Amount</label>
-              <div class="mt-1 flex rounded-md shadow-sm">
-                <button 
-                  type="button"
-                  @click="decrementValue(product, 'restocked')"
-                  class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <span class="sr-only">Decrease</span>
-                  -
-                </button>
-                <input 
-                  type="number" 
-                  v-model="product.restocked"
-                  min="0"
-                  class="focus:ring-primary-500 focus:border-primary-500 block w-full border-gray-300 rounded-none text-center sm:text-sm"
-                  placeholder="0"
-                >
-                <button 
-                  type="button"
-                  @click="incrementValue(product, 'restocked')"
-                  class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <span class="sr-only">Increase</span>
-                  +
-                </button>
-              </div>
+              <ResponsiveNumberInput
+                v-model="product.restocked"
+                :min="0"
+                placeholder="0"
+                label="Restock Amount"
+                @update:model-value="(value) => updateProductValue(product, 'restocked', value)"
+              />
             </div>
             
             <!-- New Total -->
@@ -144,10 +152,18 @@
 </template>
 
 <script setup>
+import ResponsiveNumberInput from '../common/ResponsiveNumberInput.vue'
+
 const props = defineProps({
   machines: Array
 })
 
+// Update product value method for the new component
+const updateProductValue = (product, field, value) => {
+  product[field] = value
+}
+
+// Legacy methods for backward compatibility (now unused but kept for safety)
 const incrementValue = (product, field) => {
   const currentValue = product[field] === '' ? 0 : parseInt(product[field]) || 0
   product[field] = currentValue + 1

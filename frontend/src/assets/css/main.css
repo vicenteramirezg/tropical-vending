@@ -10,4 +10,70 @@
   body {
     @apply bg-gray-50;
   }
+
+  /* Hide native number input spinners globally for consistency */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer components {
+  /* Mobile-first responsive modal utilities */
+  .modal-mobile-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Ensure inputs are easily tappable on mobile */
+  .input-mobile-friendly {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Custom utilities for mobile forms */
+  @media (max-width: 640px) {
+    .mobile-form-input {
+      @apply input-mobile-friendly py-3 px-4 text-base;
+    }
+    
+    .mobile-form-select {
+      @apply input-mobile-friendly py-3 pl-4 pr-10 text-base;
+    }
+    
+    .mobile-form-textarea {
+      @apply input-mobile-friendly py-3 px-4 text-base;
+    }
+    
+    /* Hide number input spinners on mobile specifically */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+      display: none;
+    }
+  }
+}
+
+@layer utilities {
+  /* Safe area utilities for mobile devices */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
 } 

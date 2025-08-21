@@ -1,13 +1,149 @@
 <template>
-  <div v-if="show" class="fixed inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+  <div v-if="show" class="fixed inset-0 overflow-y-auto z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <!-- Mobile: Full screen layout -->
+    <div class="sm:hidden min-h-screen bg-white">
+      <form @submit.prevent="$emit('save')" novalidate class="h-full flex flex-col">
+        <!-- Mobile Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+          <h3 class="text-lg font-medium text-gray-900" id="modal-title">
+            {{ isEditing ? 'Edit Visit' : 'Record New Visit' }}
+          </h3>
+          <button 
+            type="button"
+            @click="$emit('close')"
+            class="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500 transition ease-in-out duration-150"
+          >
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Mobile Content -->
+        <div class="flex-1 overflow-y-auto p-4 pb-safe">
+          <div class="space-y-6">
+            <!-- Route Selection -->
+            <div>
+              <label for="route-mobile" class="block text-sm font-medium text-gray-700 mb-2">Filter by Route (Optional)</label>
+              <select
+                id="route-mobile"
+                name="route"
+                :value="selectedRoute"
+                @change="$emit('route-change', $event.target.value)"
+                class="block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md"
+              >
+                <option value="">All Routes</option>
+                <option value="unassigned">Unassigned</option>
+                <option v-for="route in routes" :key="route" :value="route">
+                  {{ route }}
+                </option>
+              </select>
+            </div>
+            
+            <!-- Location Search -->
+            <div>
+              <label for="location-search-mobile" class="block text-sm font-medium text-gray-700 mb-2">Search Location</label>
+              <input
+                id="location-search-mobile"
+                name="location-search"
+                type="text"
+                :value="locationSearchText"
+                @input="$emit('location-search', $event.target.value)"
+                placeholder="Type to search locations..."
+                class="block w-full pl-3 pr-3 py-3 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md"
+              >
+            </div>
+            
+            <!-- Location Selection -->
+            <div>
+              <label for="location-mobile" class="block text-sm font-medium text-gray-700 mb-2">
+                Location
+                <span class="text-xs text-gray-500 ml-1">({{ locations.length }} locations)</span>
+              </label>
+              <select
+                id="location-mobile"
+                name="location"
+                :value="selectedLocation"
+                @change="$emit('location-change', $event.target.value)"
+                class="block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md"
+                required
+              >
+                <option value="" disabled>Select a location</option>
+                <option v-for="location in locations" :key="location.id" :value="location.id">
+                  {{ location.name }}
+                  <span v-if="location.route" class="text-gray-500"> - {{ location.route }}</span>
+                </option>
+              </select>
+            </div>
+            
+            <div>
+              <label for="visit_date_mobile" class="block text-sm font-medium text-gray-700 mb-2">Visit Date</label>
+              <input 
+                type="datetime-local" 
+                name="visit_date" 
+                id="visit_date_mobile" 
+                v-model="restockForm.visit_date"
+                class="focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm text-base border-gray-300 rounded-md text-gray-900 py-3"
+                required
+              >
+            </div>
+
+            <!-- Machine Products Section -->
+            <MachineProductsSection
+              v-if="locationMachines.length > 0"
+              :machines="locationMachines"
+            />
+            
+            <div>
+              <label for="notes-mobile" class="block text-sm font-medium text-gray-700 mb-2">Visit Notes</label>
+              <textarea 
+                id="notes-mobile" 
+                name="notes" 
+                rows="3" 
+                v-model="restockForm.notes"
+                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full text-base border border-gray-300 rounded-md py-3"
+                placeholder="Add any notes about this visit..."
+              ></textarea>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Mobile Footer -->
+        <div class="border-t border-gray-200 bg-white p-4 space-y-3 sticky bottom-0">
+          <button 
+            type="submit"
+            :disabled="saving"
+            class="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-3 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
+          >
+            <span v-if="saving" class="inline-flex items-center">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Saving...
+            </span>
+            <span v-else>Save Visit</span>
+          </button>
+          <button 
+            type="button"
+            @click="$emit('close')"
+            class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 min-h-[48px]"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Desktop/Tablet: Modal overlay layout -->
+    <div class="hidden sm:flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
       <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="$emit('close')"></div>
       
       <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
       
-      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-        <form @submit.prevent="$emit('save')" novalidate>
-          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+      <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-5xl sm:w-full max-h-[90vh] flex flex-col">
+        <form @submit.prevent="$emit('save')" novalidate class="flex flex-col h-full">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 flex-1 overflow-y-auto">
             <div class="sm:flex sm:items-start">
               <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
                 <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
@@ -101,7 +237,7 @@
             </div>
           </div>
           
-          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t">
             <button 
               type="submit"
               :disabled="saving"

@@ -21,7 +21,7 @@
       :hasActiveFilters="hasActiveFilters"
       :activeFilters="activeFilters"
       :filteredCount="filteredProducts.length"
-      :totalCount="productCount"
+      :totalCount="totalCount"
       @clearSearch="clearSearch"
       @clearAllFilters="clearAllFilters"
       @removeFilter="removeFilter"
@@ -77,6 +77,18 @@
       @delete="confirmDelete"
     />
     
+    <!-- Pagination -->
+    <Pagination
+      v-if="totalPages > 1 && !loading && !error"
+      :current-page="currentPage"
+      :total-pages="totalPages"
+      :total-items="totalCount"
+      :page-size="pageSize"
+      :page-size-options="[10, 20, 50, 100]"
+      @page-change="handlePageChange"
+      @page-size-change="handlePageSizeChange"
+    />
+    
     <!-- Product Form Modal -->
     <ProductFormModal
       :show="showModal"
@@ -109,7 +121,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useProducts } from '../composables/useProducts'
 import { useProductFilters } from '../composables/useProductFilters'
 import ProductFilters from '../components/products/ProductFilters.vue'
@@ -118,6 +130,7 @@ import ProductFormModal from '../components/products/ProductFormModal.vue'
 import DeleteConfirmationModal from '../components/products/DeleteConfirmationModal.vue'
 import CostHistoryModal from '../components/products/CostHistoryModal.vue'
 import EmptyState from '../components/products/EmptyState.vue'
+import Pagination from '../components/common/Pagination.vue'
 
 // Use composables
 const {
@@ -125,23 +138,51 @@ const {
   loading,
   error,
   productCount,
+  currentPage,
+  pageSize,
+  totalCount,
+  totalPages,
   fetchProducts,
+  goToPage,
+  changePageSize,
   createProduct,
   updateProduct,
   deleteProduct: deleteProductApi,
-  getProductCostHistory
+  getProductCostHistory,
+  resetToFirstPage
 } = useProducts()
 
 const {
   searchQuery,
   selectedProductType,
-  filteredProducts,
   hasActiveFilters,
   activeFilters,
+  getFilteredProducts,
+  getFilterParams,
   clearSearch,
   clearAllFilters,
   removeFilter
-} = useProductFilters(products)
+} = useProductFilters()
+
+// Computed filtered products (for display purposes)
+const filteredProducts = computed(() => {
+  return getFilteredProducts(products.value)
+})
+
+// Watch for filter changes and reset to first page
+watch([searchQuery, selectedProductType], async () => {
+  if (hasActiveFilters.value) {
+    await resetToFirstPage()
+  }
+})
+
+// Enhanced fetch products with filters
+const fetchProductsWithFilters = async (page = 1, size = pageSize.value) => {
+  const filterParams = getFilterParams()
+  
+  // Call the base fetchProducts function with filters
+  await fetchProducts(page, size, filterParams)
+}
 
 // Modal states
 const showModal = ref(false)
@@ -210,6 +251,15 @@ const closeCostHistoryModal = () => {
   costHistoryError.value = null
 }
 
+// Pagination handlers
+const handlePageChange = async (page) => {
+  await fetchProductsWithFilters(page, pageSize.value)
+}
+
+const handlePageSizeChange = async (size) => {
+  await fetchProductsWithFilters(1, size) // Reset to first page when changing page size
+}
+
 // Product operations
 const saveProduct = async (productData) => {
   modalLoading.value = true
@@ -246,5 +296,7 @@ const deleteProduct = async () => {
 }
 
 // Initialize data on component mount
-onMounted(fetchProducts)
+onMounted(() => {
+  fetchProductsWithFilters()
+})
 </script> 

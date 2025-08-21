@@ -4,12 +4,33 @@ from rest_framework.response import Response
 from core.models import Product, MachineItemPrice
 from core.serializers import ProductSerializer
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all().order_by('name')
     serializer_class = ProductSerializer
     search_fields = ['name', 'unit_type']
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['product_type']
+    
+    def get_queryset(self):
+        """
+        Override get_queryset to handle custom filtering if needed
+        """
+        queryset = Product.objects.all().order_by('name')
+        
+        # Apply search filter
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+        
+        # Apply product type filter
+        product_type = self.request.query_params.get('product_type', None)
+        if product_type:
+            queryset = queryset.filter(product_type=product_type)
+        
+        return queryset
     
     def get_serializer_context(self):
         context = super().get_serializer_context()

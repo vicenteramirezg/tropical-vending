@@ -1,12 +1,12 @@
 import { ref, computed } from 'vue'
 
-export function useProductFilters(products) {
+export function useProductFilters() {
   const searchQuery = ref('')
   const selectedProductType = ref('')
 
-  // Computed property for filtered products
-  const filteredProducts = computed(() => {
-    let filtered = products.value || []
+  // Computed property for filtered products (for local filtering when needed)
+  const getFilteredProducts = (products) => {
+    let filtered = products || []
 
     // Filter by search query
     if (searchQuery.value.trim()) {
@@ -24,7 +24,22 @@ export function useProductFilters(products) {
     }
 
     return filtered
-  })
+  }
+
+  // Get filter parameters for API calls
+  const getFilterParams = () => {
+    const params = {}
+    
+    if (searchQuery.value.trim()) {
+      params.search = searchQuery.value.trim()
+    }
+    
+    if (selectedProductType.value) {
+      params.product_type = selectedProductType.value
+    }
+    
+    return params
+  }
 
   // Check if any filters are active
   const hasActiveFilters = computed(() => {
@@ -90,11 +105,12 @@ export function useProductFilters(products) {
     selectedProductType,
     
     // Computed
-    filteredProducts,
     hasActiveFilters,
     activeFilters,
     
     // Methods
+    getFilteredProducts,
+    getFilterParams,
     clearSearch,
     clearProductType,
     clearAllFilters,

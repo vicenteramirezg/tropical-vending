@@ -16,6 +16,7 @@
                 <div class="mt-4 space-y-4">
                   <div>
                     <label for="product" class="block text-sm font-medium text-gray-700">Product</label>
+                    <!-- Product dropdown now shows all available products (not limited to first 50) -->
                     <select
                       id="product"
                       name="product"

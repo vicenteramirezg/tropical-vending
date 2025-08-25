@@ -1,7 +1,7 @@
 <template>
   <div v-if="show" class="fixed inset-0 overflow-y-auto z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <!-- Mobile: Full screen layout -->
-    <div class="sm:hidden min-h-screen bg-white">
+    <!-- Mobile/Tablet: Full screen layout (up to md breakpoint) -->
+    <div class="md:hidden min-h-screen bg-white">
       <form @submit.prevent="$emit('save')" novalidate class="h-full flex flex-col">
         <!-- Mobile Header -->
         <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
@@ -19,8 +19,8 @@
           </button>
         </div>
         
-        <!-- Mobile Content -->
-        <div class="flex-1 overflow-y-auto p-4 pb-safe">
+        <!-- Mobile Content - Ensure it's scrollable and doesn't overflow -->
+        <div class="flex-1 overflow-y-auto p-4 pb-20">
           <div class="space-y-6">
             <!-- Route Selection -->
             <div>
@@ -88,11 +88,12 @@
               >
             </div>
 
-            <!-- Machine Products Section -->
-            <MachineProductsSection
-              v-if="locationMachines.length > 0"
-              :machines="locationMachines"
-            />
+            <!-- Machine Products Section - Ensure it doesn't take up too much space -->
+            <div v-if="locationMachines.length > 0" class="space-y-4">
+              <MachineProductsSection
+                :machines="locationMachines"
+              />
+            </div>
             
             <div>
               <label for="notes-mobile" class="block text-sm font-medium text-gray-700 mb-2">Visit Notes</label>
@@ -105,11 +106,14 @@
                 placeholder="Add any notes about this visit..."
               ></textarea>
             </div>
+            
+            <!-- Add bottom padding to ensure content doesn't get hidden behind footer -->
+            <div class="h-20"></div>
           </div>
         </div>
         
-        <!-- Mobile Footer -->
-        <div class="border-t border-gray-200 bg-white p-4 space-y-3 sticky bottom-0">
+        <!-- Mobile Footer - Fixed at bottom with proper z-index -->
+        <div class="border-t border-gray-200 bg-white p-4 space-y-3 fixed bottom-0 left-0 right-0 z-20">
           <button 
             type="submit"
             :disabled="saving"
@@ -135,8 +139,8 @@
       </form>
     </div>
 
-    <!-- Desktop/Tablet: Modal overlay layout -->
-    <div class="hidden sm:block modal-overlay">
+    <!-- Desktop: Modal overlay layout (md breakpoint and above) -->
+    <div class="hidden md:block modal-overlay">
       <div class="flex items-center justify-center min-h-full pt-4 px-4 pb-20 text-center">
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="$emit('close')"></div>
         

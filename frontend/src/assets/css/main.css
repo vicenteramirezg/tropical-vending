@@ -71,6 +71,31 @@
     width: 100%;
   }
   
+  /* Mobile-specific modal improvements */
+  @media (max-width: 768px) {
+    /* Ensure mobile modal content is properly scrollable */
+    .modal-content {
+      max-height: 100vh;
+      height: 100vh;
+    }
+    
+    /* Mobile footer should always be visible */
+    .mobile-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      background: white;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    /* Ensure content doesn't get hidden behind fixed footer */
+    .mobile-content {
+      padding-bottom: 120px; /* Space for footer + safe area */
+    }
+  }
+  
   /* Custom utilities for mobile forms */
   @media (max-width: 640px) {
     .mobile-form-input {
@@ -95,7 +120,7 @@
   }
   
   /* Desktop/tablet modal improvements */
-  @media (min-width: 641px) {
+  @media (min-width: 769px) {
     .modal-content {
       max-height: 85vh;
     }
@@ -173,20 +198,29 @@
 }
 
 @layer utilities {
-  /* Safe area utilities for mobile devices */
+  /* Safe area utilities for mobile devices with fallbacks */
   .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 1.25rem));
   }
   
   .pt-safe {
-    padding-top: env(safe-area-inset-top);
+    padding-top: max(1.25rem, env(safe-area-inset-top, 1.25rem));
   }
   
   .pl-safe {
-    padding-left: env(safe-area-inset-left);
+    padding-left: max(1rem, env(safe-area-inset-left, 1rem));
   }
   
   .pr-safe {
-    padding-right: env(safe-area-inset-right);
+    padding-right: max(1rem, env(safe-area-inset-right, 1rem));
+  }
+  
+  /* Mobile-specific spacing utilities */
+  .pb-mobile-footer {
+    padding-bottom: 120px; /* Space for footer + safe area */
+  }
+  
+  .h-mobile-footer {
+    height: 120px; /* Height of mobile footer */
   }
 } 

@@ -52,4 +52,14 @@ class ProductViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(product)
             return Response(serializer.data)
         except Exception as e:
-            return Response({"error": str(e)}, status=404) 
+            return Response({"error": str(e)}, status=404)
+    
+    @action(detail=False, methods=['get'])
+    def all(self, request):
+        """Get all products without pagination for use in dropdowns and forms"""
+        # Override pagination for this specific endpoint
+        self.pagination_class = None
+        
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data) 

@@ -205,6 +205,11 @@ export const api = {
   getProducts(params = {}, skipCache = false) {
     return cachedGet('/products/', params, skipCache)
   },
+  getAllProducts(skipCache = false) {
+    // Use the custom 'all' endpoint to get all products without pagination
+    // This is more efficient than setting a large page_size
+    return cachedGet('/products/all/', {}, skipCache)
+  },
   getProduct(id) {
     return cachedGet(`/products/${id}/`)
   },

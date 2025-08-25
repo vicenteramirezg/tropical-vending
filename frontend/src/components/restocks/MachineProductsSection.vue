@@ -18,7 +18,7 @@
         </div>
       </div>
     </div>
-    <div class="flex-1 overflow-y-auto min-h-[200px] max-h-[25vh] sm:max-h-[30vh] lg:max-h-[32vh] border border-gray-200 rounded-lg">
+    <div class="flex-1 overflow-y-auto min-h-[200px] max-h-[20vh] sm:max-h-[25vh] lg:max-h-[30vh] border border-gray-200 rounded-lg">
       <div class="space-y-4 p-4">
       <div v-for="machine in machines" :key="machine.id" :class="['border rounded-lg p-3 sm:p-4', getMachineStatusClass(machine)]">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-2">
@@ -41,10 +41,10 @@
             No products in this machine
           </div>
           
-          <!-- Mobile Layout -->
+          <!-- Mobile Layout - Compact spacing for mobile -->
           <div v-for="product in machine.products" :key="product.id" class="sm:hidden">
-            <div :class="['border rounded-lg p-3', getProductStatusClass(product)]">
-              <div class="flex items-center justify-between mb-3">
+            <div :class="['border rounded-lg p-2 sm:p-3', getProductStatusClass(product)]">
+              <div class="flex items-center justify-between mb-2 sm:mb-3">
                 <div class="flex items-center space-x-2">
                   <div class="text-sm font-medium text-gray-900 bg-gray-100 rounded-md px-2 py-1 min-w-[2rem] text-center">
                     {{ product.slot }}
@@ -56,7 +56,7 @@
                 </div>
               </div>
               
-              <div class="space-y-3">
+              <div class="space-y-2 sm:space-y-3">
                 <!-- Current Stock -->
                 <div>
                   <label class="block text-xs text-gray-500 mb-1">Current Stock</label>

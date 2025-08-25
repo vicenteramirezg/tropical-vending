@@ -77,11 +77,20 @@ export function usePurchases() {
 
   const fetchProducts = async () => {
     try {
-      const response = await api.getProducts()
-      // Handle paginated response - extract results array
-      products.value = response.data.results || response.data
+      // Use the dedicated endpoint to get all products without pagination
+      // This ensures the purchase form dropdown shows all available products
+      const response = await api.getAllProducts()
+      products.value = response.data
     } catch (err) {
-      console.error('Error fetching products:', err)
+      console.error('Error fetching products with getAllProducts, falling back to paginated method:', err)
+      try {
+        // Fallback: fetch all products by setting a very large page size
+        const response = await api.getProducts({ page_size: 1000 })
+        products.value = response.data.results || response.data
+      } catch (fallbackErr) {
+        console.error('Fallback method also failed:', fallbackErr)
+        error.value = 'Failed to load products. Please try again later.'
+      }
     }
   }
 

@@ -323,27 +323,30 @@ export function useDashboard() {
         format: format
       }
       
-      // Use the API service for proper authentication
-      const response = await api.getAdvancedAnalytics(params, true) // Skip cache for exports
+      // Make direct API call with blob response type for CSV
+      const axiosResponse = await api.apiClient.get('/analytics/advanced-demand/', {
+        params: params,
+        responseType: format === 'csv' ? 'blob' : 'json'
+      })
       
-      // If the response is already JSON (not CSV), we need to make a direct axios call for blob response
       if (format === 'csv') {
-        // Make a direct axios call to get the blob response
-        const axiosResponse = await api.apiClient.get('/analytics/advanced-demand/', {
-          params: params,
-          responseType: 'blob'
-        })
-        
         // Handle CSV download
         const blob = axiosResponse.data
-        const downloadUrl = window.URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = downloadUrl
-        link.download = `analytics_report_${new Date().toISOString().split('T')[0]}.${format}`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        window.URL.revokeObjectURL(downloadUrl)
+        
+        // Check if we actually got a blob
+        if (blob instanceof Blob) {
+          const downloadUrl = window.URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = downloadUrl
+          link.download = `analytics_report_${new Date().toISOString().split('T')[0]}.${format}`
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          window.URL.revokeObjectURL(downloadUrl)
+        } else {
+          console.error('Expected blob, got:', typeof blob, blob)
+          throw new Error('Server did not return CSV data as expected')
+        }
       }
       
       return true

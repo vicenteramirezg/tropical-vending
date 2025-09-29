@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
             reverse_sql="DROP INDEX IF EXISTS idx_restock_entry_visit_machine;"
         ),
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_machine_item_machine_product ON core_machineitemdprice(machine_id, product_id);",
+            "CREATE INDEX IF NOT EXISTS idx_machine_item_machine_product ON core_machineitemprice(machine_id, product_id);",
             reverse_sql="DROP INDEX IF EXISTS idx_machine_item_machine_product;"
         ),
         migrations.RunSQL(

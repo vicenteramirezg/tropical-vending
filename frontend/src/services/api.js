@@ -150,6 +150,9 @@ const batchApiCalls = async (calls) => {
 };
 
 export const api = {
+  // Expose the apiClient for direct access when needed
+  apiClient,
+  
   // Utility methods
   batchApiCalls,
   invalidateCache: invalidateCachePattern,
@@ -411,6 +414,9 @@ export const api = {
   },
   getRevenueProfitData(params = {}, skipCache = false) {
     return cachedGet('/analytics/revenue-profit/', params, skipCache)
+  },
+  getAdvancedAnalytics(params = {}, skipCache = false) {
+    return cachedGet('/analytics/advanced-demand/', params, skipCache)
   },
   
   getProductCostHistory: async (productId, skipCache = false) => {

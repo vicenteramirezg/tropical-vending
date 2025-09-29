@@ -1131,4 +1131,522 @@ class StockCoverageEstimateView(OptimizedAnalyticsViewMixin, APIView):
             }
         
         data = self.get_cached_or_compute(cache_key, compute_stock_coverage)
-        return Response(data) 
+        return Response(data)
+
+
+class AdvancedDemandAnalyticsView(OptimizedAnalyticsViewMixin, APIView):
+    """
+    Advanced demand analytics using sophisticated SQL query to analyze product performance,
+    demand patterns, inventory turnover, and profitability insights
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        # Get filter parameters
+        location_id = request.query_params.get('location')
+        machine_id = request.query_params.get('machine')
+        product_id = request.query_params.get('product')
+        days = request.query_params.get('days', '30')
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        format_type = request.query_params.get('format', 'json')  # json or csv
+        
+        # Set the date range
+        if start_date and end_date:
+            try:
+                start_date = datetime.strptime(start_date, '%Y-%m-%d').replace(tzinfo=timezone.get_current_timezone())
+                end_date = datetime.strptime(end_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59, tzinfo=timezone.get_current_timezone())
+            except ValueError:
+                return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            end_date = timezone.now()
+            days = int(days)
+            start_date = end_date - timedelta(days=days)
+        
+        # Create cache key
+        cache_params = {
+            'location': location_id,
+            'machine': machine_id,
+            'product': product_id,
+            'start_date': start_date,
+            'end_date': end_date,
+            'view': 'advanced_demand_analytics'
+        }
+        cache_key = self.get_cache_key('advanced_demand_analytics', cache_params)
+        
+        def compute_advanced_analytics():
+            # Build the sophisticated SQL query with proper filtering
+            base_query = """
+            SELECT
+                -- Current visit data
+                a.stock_before,
+                a.restocked,
+                a.discarded,
+                f.name AS product_name,
+                f.id AS product_id,
+                g.price AS product_unit_price,
+                h.unit_cost AS product_unit_cost,
+                d.name AS machine_name,
+                d.id AS machine_id,
+                d.machine_type,
+                d.model AS machine_model,
+                e.name AS location_name,
+                e.id AS location_id,
+                c.visit_date,
+                h.date AS product_cost_date,
+                
+                -- Previous visit data for same machine × product × location
+                prev.c_prev_visit_date,
+                prev.prev_stock_before,
+                prev.prev_restocked,
+                prev.prev_discarded,
+                
+                -- Days between visits
+                CASE
+                    WHEN prev.c_prev_visit_date IS NOT NULL
+                    THEN DATE_PART('day', c.visit_date::timestamp - prev.c_prev_visit_date::timestamp)
+                END AS days_since_prev_visit,
+                
+                -- Estimated demand calculation
+                GREATEST(
+                    COALESCE(prev.prev_stock_before, 0)
+                    + COALESCE(prev.prev_restocked, 0)
+                    - COALESCE(prev.prev_discarded, 0)
+                    - COALESCE(a.stock_before, 0),
+                    0
+                ) AS est_demand_units,
+                
+                -- Daily demand rate
+                ROUND((
+                    GREATEST(
+                        COALESCE(prev.prev_stock_before, 0)
+                        + COALESCE(prev.prev_restocked, 0)
+                        - COALESCE(prev.prev_discarded, 0)
+                        - COALESCE(a.stock_before, 0),
+                        0
+                    )
+                    / NULLIF(
+                        DATE_PART('day', c.visit_date::timestamp - prev.c_prev_visit_date::timestamp)
+                        , 0)
+                )::numeric, 2) AS est_demand_units_per_day
+                
+            FROM core_restockentry a
+            LEFT JOIN core_visitmachinerestock b ON a.visit_machine_restock_id = b.id
+            LEFT JOIN core_visit c ON b.visit_id = c.id
+            LEFT JOIN core_machine d ON b.machine_id = d.id
+            LEFT JOIN core_location e ON c.location_id = e.id
+            LEFT JOIN core_product f ON a.product_id = f.id
+            LEFT JOIN core_machineitemprice g ON (b.machine_id = g.machine_id AND a.product_id = g.product_id)
+            LEFT JOIN LATERAL (
+                SELECT unit_cost, date
+                FROM core_productcost
+                WHERE product_id = a.product_id
+                AND date <= c.visit_date
+                ORDER BY date DESC NULLS LAST
+                LIMIT 1
+            ) h ON TRUE
+            
+            -- Previous visit subquery
+            LEFT JOIN LATERAL (
+                SELECT
+                    c2.visit_date AS c_prev_visit_date,
+                    a2.stock_before AS prev_stock_before,
+                    a2.restocked AS prev_restocked,
+                    a2.discarded AS prev_discarded
+                FROM core_visitmachinerestock b2
+                JOIN core_visit c2 ON b2.visit_id = c2.id
+                JOIN core_restockentry a2 ON (a2.visit_machine_restock_id = b2.id AND a2.product_id = a.product_id)
+                WHERE b2.machine_id = b.machine_id
+                AND c2.location_id = c.location_id
+                AND c2.visit_date < c.visit_date
+                ORDER BY c2.visit_date DESC
+                LIMIT 1
+            ) prev ON TRUE
+            
+            WHERE c.visit_date >= %s AND c.visit_date <= %s
+            """
+            
+            # Add filters
+            params = [start_date, end_date]
+            
+            if location_id:
+                base_query += " AND c.location_id = %s"
+                params.append(location_id)
+                
+            if machine_id:
+                base_query += " AND b.machine_id = %s"
+                params.append(machine_id)
+                
+            if product_id:
+                base_query += " AND a.product_id = %s"
+                params.append(product_id)
+                
+            base_query += " ORDER BY c.visit_date DESC"
+            
+            # Execute the query
+            with connection.cursor() as cursor:
+                cursor.execute(base_query, params)
+                columns = [col[0] for col in cursor.description]
+                raw_results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+            
+            # Transform raw results into meaningful analytics
+            return self._process_advanced_analytics_data(raw_results, start_date, end_date)
+        
+        data = self.get_cached_or_compute(cache_key, compute_advanced_analytics)
+        
+        # Handle CSV export
+        if format_type.lower() == 'csv':
+            return self._export_csv(data, 'advanced_demand_analytics')
+        
+        return Response(data)
+    
+    def _process_advanced_analytics_data(self, raw_results, start_date, end_date):
+        """Transform raw SQL results into meaningful analytics insights"""
+        
+        # Initialize aggregations
+        products_performance = {}
+        machines_performance = {}
+        locations_performance = {}
+        time_series_data = []
+        
+        total_demand = 0
+        total_revenue = 0
+        total_profit = 0
+        total_restocks = 0
+        
+        # Process each row
+        for row in raw_results:
+            # Skip rows without valid demand data
+            if row['est_demand_units'] is None or row['est_demand_units'] <= 0:
+                continue
+                
+            # Extract key metrics
+            demand_units = float(row['est_demand_units'] or 0)
+            daily_demand = float(row['est_demand_units_per_day'] or 0)
+            price = float(row['product_unit_price'] or 0)
+            cost = float(row['product_unit_cost'] or 0)
+            revenue = demand_units * price
+            profit = demand_units * (price - cost)
+            days_between = float(row['days_since_prev_visit'] or 0)
+            
+            # Aggregate totals
+            total_demand += demand_units
+            total_revenue += revenue
+            total_profit += profit
+            total_restocks += 1
+            
+            # Product performance aggregation
+            product_key = row['product_id']
+            if product_key not in products_performance:
+                products_performance[product_key] = {
+                    'product_id': product_key,
+                    'product_name': row['product_name'],
+                    'total_demand': 0,
+                    'total_revenue': 0,
+                    'total_profit': 0,
+                    'avg_daily_demand': 0,
+                    'avg_price': 0,
+                    'avg_cost': 0,
+                    'profit_margin': 0,
+                    'restock_count': 0,
+                    'machines_count': set(),
+                    'locations_count': set(),
+                    'demand_periods': [],
+                    'velocity_score': 0,
+                    'performance_trend': 'stable'
+                }
+            
+            product_data = products_performance[product_key]
+            product_data['total_demand'] += demand_units
+            product_data['total_revenue'] += revenue
+            product_data['total_profit'] += profit
+            product_data['restock_count'] += 1
+            product_data['machines_count'].add(row['machine_id'])
+            product_data['locations_count'].add(row['location_id'])
+            product_data['demand_periods'].append({
+                'date': row['visit_date'],
+                'demand': demand_units,
+                'daily_demand': daily_demand,
+                'days_between': days_between
+            })
+            
+            # Machine performance aggregation
+            machine_key = row['machine_id']
+            if machine_key not in machines_performance:
+                machines_performance[machine_key] = {
+                    'machine_id': machine_key,
+                    'machine_name': row['machine_name'],
+                    'machine_type': row['machine_type'],
+                    'machine_model': row['machine_model'],
+                    'location_id': row['location_id'],
+                    'location_name': row['location_name'],
+                    'total_demand': 0,
+                    'total_revenue': 0,
+                    'total_profit': 0,
+                    'avg_daily_demand': 0,
+                    'product_count': set(),
+                    'restock_count': 0,
+                    'efficiency_score': 0
+                }
+            
+            machine_data = machines_performance[machine_key]
+            machine_data['total_demand'] += demand_units
+            machine_data['total_revenue'] += revenue
+            machine_data['total_profit'] += profit
+            machine_data['restock_count'] += 1
+            machine_data['product_count'].add(row['product_id'])
+            
+            # Location performance aggregation
+            location_key = row['location_id']
+            if location_key not in locations_performance:
+                locations_performance[location_key] = {
+                    'location_id': location_key,
+                    'location_name': row['location_name'],
+                    'total_demand': 0,
+                    'total_revenue': 0,
+                    'total_profit': 0,
+                    'machine_count': set(),
+                    'product_count': set(),
+                    'avg_daily_demand': 0,
+                    'restock_count': 0
+                }
+            
+            location_data = locations_performance[location_key]
+            location_data['total_demand'] += demand_units
+            location_data['total_revenue'] += revenue
+            location_data['total_profit'] += profit
+            location_data['restock_count'] += 1
+            location_data['machine_count'].add(row['machine_id'])
+            location_data['product_count'].add(row['product_id'])
+            
+            # Time series data for trend analysis
+            time_series_data.append({
+                'date': row['visit_date'],
+                'demand': demand_units,
+                'revenue': revenue,
+                'profit': profit,
+                'daily_demand': daily_demand,
+                'product_name': row['product_name'],
+                'machine_name': row['machine_name'],
+                'location_name': row['location_name']
+            })
+        
+        # Post-process aggregated data
+        self._finalize_product_analytics(products_performance)
+        self._finalize_machine_analytics(machines_performance)
+        self._finalize_location_analytics(locations_performance)
+        
+        # Calculate overall KPIs
+        analysis_days = (end_date - start_date).days
+        avg_daily_demand = total_demand / analysis_days if analysis_days > 0 else 0
+        overall_profit_margin = (total_profit / total_revenue * 100) if total_revenue > 0 else 0
+        
+        # Sort results by performance
+        top_products = sorted(products_performance.values(), key=lambda x: x['total_demand'], reverse=True)
+        top_machines = sorted(machines_performance.values(), key=lambda x: x['total_demand'], reverse=True)
+        top_locations = sorted(locations_performance.values(), key=lambda x: x['total_demand'], reverse=True)
+        
+        return {
+            'summary': {
+                'analysis_period': {
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'days': analysis_days
+                },
+                'total_demand_units': total_demand,
+                'total_revenue': round(total_revenue, 2),
+                'total_profit': round(total_profit, 2),
+                'avg_daily_demand': round(avg_daily_demand, 2),
+                'overall_profit_margin': round(overall_profit_margin, 2),
+                'total_restocks': total_restocks,
+                'unique_products': len(products_performance),
+                'unique_machines': len(machines_performance),
+                'unique_locations': len(locations_performance)
+            },
+            'products': {
+                'top_performers': top_products[:10],
+                'all': top_products
+            },
+            'machines': {
+                'top_performers': top_machines[:10],
+                'all': top_machines
+            },
+            'locations': {
+                'performance': top_locations
+            },
+            'trends': {
+                'time_series': sorted(time_series_data, key=lambda x: x['date']),
+                'daily_summary': self._generate_daily_summary(time_series_data)
+            },
+            'insights': self._generate_insights(products_performance, machines_performance, locations_performance),
+            'generated_at': timezone.now()
+        }
+    
+    def _finalize_product_analytics(self, products_performance):
+        """Calculate final metrics for products"""
+        for product_data in products_performance.values():
+            # Convert sets to counts
+            product_data['machines_count'] = len(product_data['machines_count'])
+            product_data['locations_count'] = len(product_data['locations_count'])
+            
+            # Calculate averages and derived metrics
+            if product_data['restock_count'] > 0:
+                product_data['avg_revenue_per_restock'] = product_data['total_revenue'] / product_data['restock_count']
+                product_data['avg_demand_per_restock'] = product_data['total_demand'] / product_data['restock_count']
+            
+            if product_data['total_revenue'] > 0:
+                product_data['profit_margin'] = (product_data['total_profit'] / product_data['total_revenue']) * 100
+            
+            # Calculate velocity score (demand per day per machine)
+            total_days = sum(period['days_between'] for period in product_data['demand_periods'] if period['days_between'] > 0)
+            if total_days > 0 and product_data['machines_count'] > 0:
+                product_data['velocity_score'] = product_data['total_demand'] / (total_days / len(product_data['demand_periods'])) / product_data['machines_count']
+            
+            # Calculate performance trend
+            if len(product_data['demand_periods']) >= 3:
+                recent_periods = sorted(product_data['demand_periods'], key=lambda x: x['date'])[-3:]
+                earlier_periods = sorted(product_data['demand_periods'], key=lambda x: x['date'])[:-3][-3:] if len(product_data['demand_periods']) > 3 else []
+                
+                if earlier_periods:
+                    recent_avg = sum(p['daily_demand'] for p in recent_periods) / len(recent_periods)
+                    earlier_avg = sum(p['daily_demand'] for p in earlier_periods) / len(earlier_periods)
+                    
+                    if recent_avg > earlier_avg * 1.1:
+                        product_data['performance_trend'] = 'improving'
+                    elif recent_avg < earlier_avg * 0.9:
+                        product_data['performance_trend'] = 'declining'
+            
+            # Clean up temporary data
+            del product_data['demand_periods']
+    
+    def _finalize_machine_analytics(self, machines_performance):
+        """Calculate final metrics for machines"""
+        for machine_data in machines_performance.values():
+            # Convert sets to counts
+            machine_data['product_count'] = len(machine_data['product_count'])
+            
+            # Calculate efficiency score (revenue per restock)
+            if machine_data['restock_count'] > 0:
+                machine_data['efficiency_score'] = machine_data['total_revenue'] / machine_data['restock_count']
+                machine_data['avg_demand_per_restock'] = machine_data['total_demand'] / machine_data['restock_count']
+    
+    def _finalize_location_analytics(self, locations_performance):
+        """Calculate final metrics for locations"""
+        for location_data in locations_performance.values():
+            # Convert sets to counts
+            location_data['machine_count'] = len(location_data['machine_count'])
+            location_data['product_count'] = len(location_data['product_count'])
+            
+            # Calculate averages
+            if location_data['machine_count'] > 0:
+                location_data['avg_revenue_per_machine'] = location_data['total_revenue'] / location_data['machine_count']
+                location_data['avg_demand_per_machine'] = location_data['total_demand'] / location_data['machine_count']
+    
+    def _generate_daily_summary(self, time_series_data):
+        """Generate daily aggregated summary from time series data"""
+        daily_data = {}
+        for entry in time_series_data:
+            date_key = entry['date'].date()
+            if date_key not in daily_data:
+                daily_data[date_key] = {
+                    'date': date_key,
+                    'total_demand': 0,
+                    'total_revenue': 0,
+                    'total_profit': 0,
+                    'restock_count': 0
+                }
+            
+            daily_data[date_key]['total_demand'] += entry['demand']
+            daily_data[date_key]['total_revenue'] += entry['revenue']
+            daily_data[date_key]['total_profit'] += entry['profit']
+            daily_data[date_key]['restock_count'] += 1
+        
+        return sorted(daily_data.values(), key=lambda x: x['date'])
+    
+    def _generate_insights(self, products_performance, machines_performance, locations_performance):
+        """Generate automated insights from the analytics data"""
+        insights = []
+        
+        if products_performance:
+            # Top performing product
+            top_product = max(products_performance.values(), key=lambda x: x['total_demand'])
+            insights.append({
+                'type': 'top_product',
+                'title': f"Top Performing Product",
+                'description': f"{top_product['product_name']} leads with {top_product['total_demand']:.0f} units sold across {top_product['machines_count']} machines",
+                'metric': top_product['total_demand'],
+                'priority': 'high'
+            })
+            
+            # High margin products
+            high_margin_products = [p for p in products_performance.values() if p['profit_margin'] > 50]
+            if high_margin_products:
+                avg_margin = sum(p['profit_margin'] for p in high_margin_products) / len(high_margin_products)
+                insights.append({
+                    'type': 'high_margin',
+                    'title': f"High Margin Opportunities",
+                    'description': f"{len(high_margin_products)} products have >50% profit margins (avg: {avg_margin:.1f}%)",
+                    'metric': len(high_margin_products),
+                    'priority': 'medium'
+                })
+        
+        if machines_performance:
+            # Most efficient machine
+            top_machine = max(machines_performance.values(), key=lambda x: x['efficiency_score'])
+            insights.append({
+                'type': 'top_machine',
+                'title': f"Most Efficient Machine",
+                'description': f"{top_machine['machine_name']} at {top_machine['location_name']} generates ${top_machine['efficiency_score']:.0f} per restock",
+                'metric': top_machine['efficiency_score'],
+                'priority': 'medium'
+            })
+        
+        return insights
+    
+    def _export_csv(self, data, filename_prefix):
+        """Export analytics data as CSV"""
+        import csv
+        from django.http import HttpResponse
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{filename_prefix}_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+        
+        writer = csv.writer(response)
+        
+        # Write products data
+        if data.get('products', {}).get('all'):
+            writer.writerow(['=== PRODUCTS PERFORMANCE ==='])
+            writer.writerow(['Product Name', 'Total Demand', 'Total Revenue', 'Total Profit', 'Profit Margin %', 'Machines Count', 'Locations Count', 'Velocity Score', 'Trend'])
+            
+            for product in data['products']['all']:
+                writer.writerow([
+                    product['product_name'],
+                    product['total_demand'],
+                    round(product['total_revenue'], 2),
+                    round(product['total_profit'], 2),
+                    round(product['profit_margin'], 2),
+                    product['machines_count'],
+                    product['locations_count'],
+                    round(product['velocity_score'], 3),
+                    product['performance_trend']
+                ])
+            
+            writer.writerow([])  # Empty row
+        
+        # Write machines data
+        if data.get('machines', {}).get('all'):
+            writer.writerow(['=== MACHINES PERFORMANCE ==='])
+            writer.writerow(['Machine Name', 'Location', 'Total Demand', 'Total Revenue', 'Total Profit', 'Product Count', 'Efficiency Score'])
+            
+            for machine in data['machines']['all']:
+                writer.writerow([
+                    machine['machine_name'],
+                    machine['location_name'],
+                    machine['total_demand'],
+                    round(machine['total_revenue'], 2),
+                    round(machine['total_profit'], 2),
+                    machine['product_count'],
+                    round(machine['efficiency_score'], 2)
+                ])
+        
+        return response 

@@ -18,5 +18,6 @@ from .analytics_views import (
     CurrentStockReportView,
     RestockSummaryView,
     StockCoverageEstimateView,
-    AdvancedDemandAnalyticsView
+    AdvancedDemandAnalyticsView,
+    AdvancedDemandAnalyticsCSVView
 ) 

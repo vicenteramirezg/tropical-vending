@@ -1,13 +1,14 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
 
-// Determine the API URL based on the current host
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_URL = isLocalhost ? 'http://localhost:8000/api' : '/api';
+// Determine the API URL based on environment and host
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+const ENV_API_URL = import.meta?.env?.VITE_API_URL
+const API_URL = ENV_API_URL || (isLocalhost ? 'http://localhost:8000/api' : '/api')
 
-console.log('Auth Store - Current hostname:', window.location.hostname);
-console.log('Auth Store - isLocalhost:', isLocalhost);
-console.log('Auth Store - API_URL:', API_URL); // Debug log
+console.log('Auth Store - Current hostname:', window.location.hostname)
+console.log('Auth Store - isLocalhost:', isLocalhost)
+console.log('Auth Store - API_URL:', API_URL) // Debug log
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({

@@ -1,22 +1,25 @@
 import axios from 'axios'
 import { useAuthStore } from '../store/auth'
 
-// Determine the API URL based on the current host
-const isLocalhost = window.location.hostname === 'localhost' || 
-                   window.location.hostname === '127.0.0.1' || 
-                   window.location.hostname.startsWith('10.1.60.') ||
-                   window.location.hostname.startsWith('192.168.');
+// Determine API base using env overrides with sensible fallbacks
+const isLocalhost = (
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+)
 
-// Get the API URL from environment variables or use fallbacks
-let API_URL = isLocalhost ? 'http://localhost:8000/api' : '/api';
-let MEDIA_URL = isLocalhost ? 'http://localhost:8000/media' : '/media';
+// Prefer Vite env vars when available; otherwise fall back
+const ENV_API_URL = import.meta?.env?.VITE_API_URL
+const ENV_MEDIA_URL = import.meta?.env?.VITE_MEDIA_URL
+
+let API_URL = ENV_API_URL || (isLocalhost ? 'http://localhost:8000/api' : '/api')
+let MEDIA_URL = ENV_MEDIA_URL || (isLocalhost ? 'http://localhost:8000/media' : '/media')
 
 // Debug logging
-console.log('API Service - Current hostname:', window.location.hostname);
-console.log('API Service - isLocalhost:', isLocalhost);
-console.log('API Service - API_URL:', API_URL);
-console.log('API Service - MEDIA_URL:', MEDIA_URL);
-console.log('API Service - Environment:', import.meta.env.MODE);
+console.log('API Service - Current hostname:', window.location.hostname)
+console.log('API Service - isLocalhost:', isLocalhost)
+console.log('API Service - API_URL:', API_URL)
+console.log('API Service - MEDIA_URL:', MEDIA_URL)
+console.log('API Service - Environment:', import.meta.env.MODE)
 
 // Cache configuration
 const CACHE_TTL = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
@@ -419,7 +422,8 @@ export const api = {
     return cachedGet('/analytics/revenue-profit/', params, skipCache)
   },
   getAdvancedAnalytics(params = {}, skipCache = false) {
-    return cachedGet('/analytics/advanced-demand/', params, skipCache)
+    // Note: Using URL without trailing slash to avoid Django routing issue with query params
+    return cachedGet('/analytics/advanced-demand', params, skipCache)
   },
   
   getProductCostHistory: async (productId, skipCache = false) => {

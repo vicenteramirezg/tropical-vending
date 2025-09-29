@@ -315,40 +315,32 @@ export function useDashboard() {
     }
   }
 
-  // Export analytics data as CSV
-  const exportAnalyticsData = async (format = 'csv') => {
+  // Export analytics data as CSV via dedicated export endpoint
+  const exportAnalyticsData = async () => {
     try {
-      const params = { 
-        ...buildRequestParams(),
-        format: format
-      }
-      
-      // Make direct API call with blob response type for CSV
-      const axiosResponse = await api.apiClient.get('/analytics/advanced-demand/', {
-        params: params,
-        responseType: format === 'csv' ? 'blob' : 'json'
+      const params = { ...buildRequestParams() }
+
+      const axiosResponse = await api.apiClient.get('/analytics/advanced-demand/export/', {
+        params,
+        responseType: 'blob',
+        headers: { Accept: 'text/csv,application/octet-stream,*/*' },
       })
-      
-      if (format === 'csv') {
-        // Handle CSV download
-        const blob = axiosResponse.data
-        
-        // Check if we actually got a blob
-        if (blob instanceof Blob) {
-          const downloadUrl = window.URL.createObjectURL(blob)
-          const link = document.createElement('a')
-          link.href = downloadUrl
-          link.download = `analytics_report_${new Date().toISOString().split('T')[0]}.${format}`
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-          window.URL.revokeObjectURL(downloadUrl)
-        } else {
-          console.error('Expected blob, got:', typeof blob, blob)
-          throw new Error('Server did not return CSV data as expected')
-        }
+
+      const blob = axiosResponse.data
+      if (blob instanceof Blob) {
+        const downloadUrl = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = downloadUrl
+        link.download = `analytics_report_${new Date().toISOString().split('T')[0]}.csv`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(downloadUrl)
+      } else {
+        console.error('Expected blob, got:', typeof blob, blob)
+        throw new Error('Server did not return CSV data as expected')
       }
-      
+
       return true
     } catch (err) {
       console.error('Error exporting data:', err)

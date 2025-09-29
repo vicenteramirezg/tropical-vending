@@ -1296,7 +1296,13 @@ class AdvancedDemandAnalyticsView(OptimizedAnalyticsViewMixin, APIView):
         
         # Handle CSV export
         if format_type.lower() == 'csv':
-            return self._export_csv(data, 'advanced_demand_analytics')
+            try:
+                return self._export_csv(data, 'advanced_demand_analytics')
+            except Exception as e:
+                print(f"CSV export error: {e}")
+                import traceback
+                traceback.print_exc()
+                return Response({'error': f'CSV export failed: {str(e)}'}, status=500)
         
         return Response(data)
     
@@ -1650,3 +1656,168 @@ class AdvancedDemandAnalyticsView(OptimizedAnalyticsViewMixin, APIView):
                 ])
         
         return response 
+
+
+class AdvancedDemandAnalyticsCSVView(AdvancedDemandAnalyticsView):
+    """
+    Dedicated CSV export endpoint to avoid issues with format query negotiation.
+    Returns CSV regardless of query params, honoring same filters as JSON view.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # Get filter parameters
+        location_id = request.query_params.get('location')
+        machine_id = request.query_params.get('machine')
+        product_id = request.query_params.get('product')
+        days = request.query_params.get('days', '30')
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        # Set the date range
+        if start_date and end_date:
+            try:
+                start_date = datetime.strptime(start_date, '%Y-%m-%d').replace(tzinfo=timezone.get_current_timezone())
+                end_date = datetime.strptime(end_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59, tzinfo=timezone.get_current_timezone())
+            except ValueError:
+                return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            end_date = timezone.now()
+            days = int(days)
+            start_date = end_date - timedelta(days=days)
+
+        # Create cache key
+        cache_params = {
+            'location': location_id,
+            'machine': machine_id,
+            'product': product_id,
+            'start_date': start_date,
+            'end_date': end_date,
+            'view': 'advanced_demand_analytics_csv'
+        }
+        cache_key = self.get_cache_key('advanced_demand_analytics_csv', cache_params)
+
+        def compute_advanced_analytics():
+            # Build the sophisticated SQL query with proper filtering
+            base_query = """
+            SELECT
+                -- Current visit data
+                a.stock_before,
+                a.restocked,
+                a.discarded,
+                f.name AS product_name,
+                f.id AS product_id,
+                g.price AS product_unit_price,
+                h.unit_cost AS product_unit_cost,
+                d.name AS machine_name,
+                d.id AS machine_id,
+                d.machine_type,
+                d.model AS machine_model,
+                e.name AS location_name,
+                e.id AS location_id,
+                c.visit_date,
+                h.date AS product_cost_date,
+                
+                -- Previous visit data for same machine A- product A- location
+                prev.c_prev_visit_date,
+                prev.prev_stock_before,
+                prev.prev_restocked,
+                prev.prev_discarded,
+                
+                -- Days between visits
+                CASE
+                    WHEN prev.c_prev_visit_date IS NOT NULL
+                    THEN DATE_PART('day', c.visit_date::timestamp - prev.c_prev_visit_date::timestamp)
+                END AS days_since_prev_visit,
+                
+                -- Estimated demand calculation
+                GREATEST(
+                    COALESCE(prev.prev_stock_before, 0)
+                    + COALESCE(prev.prev_restocked, 0)
+                    - COALESCE(prev.prev_discarded, 0)
+                    - COALESCE(a.stock_before, 0),
+                    0
+                ) AS est_demand_units,
+                
+                -- Daily demand rate
+                ROUND((
+                    GREATEST(
+                        COALESCE(prev.prev_stock_before, 0)
+                        + COALESCE(prev.prev_restocked, 0)
+                        - COALESCE(prev.prev_discarded, 0)
+                        - COALESCE(a.stock_before, 0),
+                        0
+                    ) / NULLIF(
+                        DATE_PART('day', c.visit_date::timestamp - prev.c_prev_visit_date::timestamp),
+                        0
+                    ),
+                    2
+                )) AS est_demand_units_per_day
+            
+            FROM core_restockentry a
+            JOIN core_visitmachinerestock b ON a.visit_machine_restock_id = b.id
+            JOIN core_visit c ON b.visit_id = c.id
+            JOIN core_machine d ON b.machine_id = d.id
+            JOIN core_location e ON d.location_id = e.id
+            JOIN core_product f ON a.product_id = f.id
+            LEFT JOIN core_machineitemprice g ON g.product_id = f.id AND g.machine_id = d.id
+            LEFT JOIN LATERAL (
+                SELECT pc.unit_cost, pc.date
+                FROM core_productcost pc
+                WHERE pc.product_id = f.id
+                AND pc.date <= c.visit_date
+                ORDER BY pc.date DESC
+                LIMIT 1
+            ) h ON TRUE
+            
+            -- Subquery to get previous visit info for the same machine/location/product
+            LEFT JOIN LATERAL (
+                SELECT
+                    c2.visit_date AS c_prev_visit_date,
+                    a2.stock_before AS prev_stock_before,
+                    a2.restocked AS prev_restocked,
+                    a2.discarded AS prev_discarded
+                FROM core_restockentry a2
+                JOIN core_visitmachinerestock b2 ON a2.visit_machine_restock_id = b2.id
+                JOIN core_visit c2 ON b2.visit_id = c2.id
+                WHERE a2.product_id = a.product_id
+                AND b2.machine_id = b.machine_id
+                AND c2.location_id = c.location_id
+                AND c2.visit_date < c.visit_date
+                ORDER BY c2.visit_date DESC
+                LIMIT 1
+            ) prev ON TRUE
+            
+            WHERE c.visit_date >= %s AND c.visit_date <= %s
+            """
+            
+            # Add filters
+            params = [start_date, end_date]
+            if location_id:
+                base_query += " AND c.location_id = %s"
+                params.append(location_id)
+            if machine_id:
+                base_query += " AND b.machine_id = %s"
+                params.append(machine_id)
+            if product_id:
+                base_query += " AND a.product_id = %s"
+                params.append(product_id)
+            base_query += " ORDER BY c.visit_date DESC"
+
+            # Execute the query
+            with connection.cursor() as cursor:
+                cursor.execute(base_query, params)
+                columns = [col[0] for col in cursor.description]
+                raw_results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+            # Transform raw results into meaningful analytics
+            return self._process_advanced_analytics_data(raw_results, start_date, end_date)
+
+        data = self.get_cached_or_compute(cache_key, compute_advanced_analytics)
+        try:
+            return self._export_csv(data, 'advanced_demand_analytics')
+        except Exception as e:
+            print(f"CSV export error: {e}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': f'CSV export failed: {str(e)}'}, status=500)

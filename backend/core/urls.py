@@ -7,7 +7,7 @@ from core.views import (
     RegisterView, UserProfileView, ProductCostViewSet,
     StockLevelView, DemandAnalysisView, RevenueProfitView, DashboardView,
     CurrentStockReportView, RestockSummaryView, StockCoverageEstimateView,
-    AdvancedDemandAnalyticsView, BulkVisitSaveView
+    AdvancedDemandAnalyticsView, AdvancedDemandAnalyticsCSVView, BulkVisitSaveView
 )
 
 # Set up the router for ViewSets
@@ -35,7 +35,12 @@ urlpatterns = [
     # Analytics endpoints
     path('analytics/stock-levels/', StockLevelView.as_view(), name='stock-levels'),
     path('analytics/demand/', DemandAnalysisView.as_view(), name='demand-analysis'),
+    # Support both trailing and non-trailing slash to avoid redirect issues (XHR)
     path('analytics/advanced-demand/', AdvancedDemandAnalyticsView.as_view(), name='advanced-demand-analytics'),
+    path('analytics/advanced-demand', AdvancedDemandAnalyticsView.as_view(), name='advanced-demand-analytics-noslash'),
+    # Dedicated CSV export endpoints to avoid ?format=csv negotiation quirks
+    path('analytics/advanced-demand/export/', AdvancedDemandAnalyticsCSVView.as_view(), name='advanced-demand-analytics-export'),
+    path('analytics/advanced-demand/export', AdvancedDemandAnalyticsCSVView.as_view(), name='advanced-demand-analytics-export-noslash'),
     path('analytics/revenue-profit/', RevenueProfitView.as_view(), name='revenue-profit'),
     path('dashboard/', DashboardView.as_view(), name='dashboard'),
     

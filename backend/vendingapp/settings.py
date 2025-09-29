@@ -21,6 +21,8 @@ DEBUG = True  # Will show detailed error pages
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
     "localhost", 
     "127.0.0.1", 
+    "10.1.60.107",
+    "10.1.22.13",
     "localhost:8000",
     "127.0.0.1:8000",
     "tropical-vending-production.up.railway.app",

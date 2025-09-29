@@ -1610,7 +1610,7 @@ class AdvancedDemandAnalyticsView(OptimizedAnalyticsViewMixin, APIView):
         return insights
     
     def _export_csv(self, data, filename_prefix):
-        """Export analytics data as CSV"""
+        """Export analytics data as CSV with robust error handling"""
         import csv
         from django.http import HttpResponse
         
@@ -1619,41 +1619,57 @@ class AdvancedDemandAnalyticsView(OptimizedAnalyticsViewMixin, APIView):
         
         writer = csv.writer(response)
         
-        # Write products data
+        # Write products data with safe field access
         if data.get('products', {}).get('all'):
             writer.writerow(['=== PRODUCTS PERFORMANCE ==='])
             writer.writerow(['Product Name', 'Total Demand', 'Total Revenue', 'Total Profit', 'Profit Margin %', 'Machines Count', 'Locations Count', 'Velocity Score', 'Trend'])
             
             for product in data['products']['all']:
-                writer.writerow([
-                    product['product_name'],
-                    product['total_demand'],
-                    round(product['total_revenue'], 2),
-                    round(product['total_profit'], 2),
-                    round(product['profit_margin'], 2),
-                    product['machines_count'],
-                    product['locations_count'],
-                    round(product['velocity_score'], 3),
-                    product['performance_trend']
-                ])
+                try:
+                    writer.writerow([
+                        product.get('product_name', 'N/A'),
+                        product.get('total_demand', 0),
+                        round(product.get('total_revenue', 0), 2),
+                        round(product.get('total_profit', 0), 2),
+                        round(product.get('profit_margin', 0), 2),
+                        product.get('machines_count', 0),
+                        product.get('locations_count', 0),
+                        round(product.get('velocity_score', 0), 3),
+                        product.get('performance_trend', 'stable')
+                    ])
+                except Exception as e:
+                    print(f"Error writing product row: {e}, Product data: {product}")
+                    # Write a placeholder row to indicate error
+                    writer.writerow([
+                        product.get('product_name', 'ERROR'),
+                        'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR'
+                    ])
             
             writer.writerow([])  # Empty row
         
-        # Write machines data
+        # Write machines data with safe field access
         if data.get('machines', {}).get('all'):
             writer.writerow(['=== MACHINES PERFORMANCE ==='])
             writer.writerow(['Machine Name', 'Location', 'Total Demand', 'Total Revenue', 'Total Profit', 'Product Count', 'Efficiency Score'])
             
             for machine in data['machines']['all']:
-                writer.writerow([
-                    machine['machine_name'],
-                    machine['location_name'],
-                    machine['total_demand'],
-                    round(machine['total_revenue'], 2),
-                    round(machine['total_profit'], 2),
-                    machine['product_count'],
-                    round(machine['efficiency_score'], 2)
-                ])
+                try:
+                    writer.writerow([
+                        machine.get('machine_name', 'N/A'),
+                        machine.get('location_name', 'N/A'),
+                        machine.get('total_demand', 0),
+                        round(machine.get('total_revenue', 0), 2),
+                        round(machine.get('total_profit', 0), 2),
+                        machine.get('product_count', 0),
+                        round(machine.get('efficiency_score', 0), 2)
+                    ])
+                except Exception as e:
+                    print(f"Error writing machine row: {e}, Machine data: {machine}")
+                    # Write a placeholder row to indicate error
+                    writer.writerow([
+                        machine.get('machine_name', 'ERROR'),
+                        'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR'
+                    ])
         
         return response 
 
@@ -1662,6 +1678,7 @@ class AdvancedDemandAnalyticsCSVView(AdvancedDemandAnalyticsView):
     """
     Dedicated CSV export endpoint to avoid issues with format query negotiation.
     Returns CSV regardless of query params, honoring same filters as JSON view.
+    Reuses parent class logic to avoid duplication and ensure consistency.
     """
     permission_classes = [permissions.IsAuthenticated]
 
@@ -1686,7 +1703,7 @@ class AdvancedDemandAnalyticsCSVView(AdvancedDemandAnalyticsView):
             days = int(days)
             start_date = end_date - timedelta(days=days)
 
-        # Create cache key
+        # Create cache key (separate from JSON cache)
         cache_params = {
             'location': location_id,
             'machine': machine_id,
@@ -1697,6 +1714,7 @@ class AdvancedDemandAnalyticsCSVView(AdvancedDemandAnalyticsView):
         }
         cache_key = self.get_cache_key('advanced_demand_analytics_csv', cache_params)
 
+        # Reuse parent class's compute logic
         def compute_advanced_analytics():
             # Build the sophisticated SQL query with proper filtering
             base_query = """
@@ -1718,7 +1736,7 @@ class AdvancedDemandAnalyticsCSVView(AdvancedDemandAnalyticsView):
                 c.visit_date,
                 h.date AS product_cost_date,
                 
-                -- Previous visit data for same machine A- product A- location
+                -- Previous visit data for same machine × product × location
                 prev.c_prev_visit_date,
                 prev.prev_stock_before,
                 prev.prev_restocked,
@@ -1747,41 +1765,39 @@ class AdvancedDemandAnalyticsCSVView(AdvancedDemandAnalyticsView):
                         - COALESCE(prev.prev_discarded, 0)
                         - COALESCE(a.stock_before, 0),
                         0
-                    ) / NULLIF(
-                        DATE_PART('day', c.visit_date::timestamp - prev.c_prev_visit_date::timestamp),
-                        0
-                    ),
-                    2
-                )) AS est_demand_units_per_day
-            
+                    )
+                    / NULLIF(
+                        DATE_PART('day', c.visit_date::timestamp - prev.c_prev_visit_date::timestamp)
+                        , 0)
+                )::numeric, 2) AS est_demand_units_per_day
+                
             FROM core_restockentry a
-            JOIN core_visitmachinerestock b ON a.visit_machine_restock_id = b.id
-            JOIN core_visit c ON b.visit_id = c.id
-            JOIN core_machine d ON b.machine_id = d.id
-            JOIN core_location e ON d.location_id = e.id
-            JOIN core_product f ON a.product_id = f.id
-            LEFT JOIN core_machineitemprice g ON g.product_id = f.id AND g.machine_id = d.id
+            LEFT JOIN core_visitmachinerestock b ON a.visit_machine_restock_id = b.id
+            LEFT JOIN core_visit c ON b.visit_id = c.id
+            LEFT JOIN core_machine d ON b.machine_id = d.id
+            LEFT JOIN core_location e ON c.location_id = e.id
+            LEFT JOIN core_product f ON a.product_id = f.id
+            LEFT JOIN core_machineitemprice g ON (b.machine_id = g.machine_id AND a.product_id = g.product_id)
             LEFT JOIN LATERAL (
-                SELECT pc.unit_cost, pc.date
-                FROM core_productcost pc
-                WHERE pc.product_id = f.id
-                AND pc.date <= c.visit_date
-                ORDER BY pc.date DESC
+                SELECT unit_cost, date
+                FROM core_productcost
+                WHERE product_id = a.product_id
+                AND date <= c.visit_date
+                ORDER BY date DESC NULLS LAST
                 LIMIT 1
             ) h ON TRUE
             
-            -- Subquery to get previous visit info for the same machine/location/product
+            -- Previous visit subquery
             LEFT JOIN LATERAL (
                 SELECT
                     c2.visit_date AS c_prev_visit_date,
                     a2.stock_before AS prev_stock_before,
                     a2.restocked AS prev_restocked,
                     a2.discarded AS prev_discarded
-                FROM core_restockentry a2
-                JOIN core_visitmachinerestock b2 ON a2.visit_machine_restock_id = b2.id
+                FROM core_visitmachinerestock b2
                 JOIN core_visit c2 ON b2.visit_id = c2.id
-                WHERE a2.product_id = a.product_id
-                AND b2.machine_id = b.machine_id
+                JOIN core_restockentry a2 ON (a2.visit_machine_restock_id = b2.id AND a2.product_id = a.product_id)
+                WHERE b2.machine_id = b.machine_id
                 AND c2.location_id = c.location_id
                 AND c2.visit_date < c.visit_date
                 ORDER BY c2.visit_date DESC
@@ -1793,31 +1809,44 @@ class AdvancedDemandAnalyticsCSVView(AdvancedDemandAnalyticsView):
             
             # Add filters
             params = [start_date, end_date]
+            
             if location_id:
                 base_query += " AND c.location_id = %s"
                 params.append(location_id)
+                
             if machine_id:
                 base_query += " AND b.machine_id = %s"
                 params.append(machine_id)
+                
             if product_id:
                 base_query += " AND a.product_id = %s"
                 params.append(product_id)
+                
             base_query += " ORDER BY c.visit_date DESC"
-
+            
             # Execute the query
             with connection.cursor() as cursor:
                 cursor.execute(base_query, params)
                 columns = [col[0] for col in cursor.description]
                 raw_results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
+            
             # Transform raw results into meaningful analytics
             return self._process_advanced_analytics_data(raw_results, start_date, end_date)
 
-        data = self.get_cached_or_compute(cache_key, compute_advanced_analytics)
+        # Get or compute data using same logic as parent
         try:
+            data = self.get_cached_or_compute(cache_key, compute_advanced_analytics)
             return self._export_csv(data, 'advanced_demand_analytics')
         except Exception as e:
-            print(f"CSV export error: {e}")
+            # Detailed error logging for debugging
             import traceback
-            traceback.print_exc()
-            return Response({'error': f'CSV export failed: {str(e)}'}, status=500)
+            error_trace = traceback.format_exc()
+            print(f"CSV export error: {e}")
+            print(f"Full traceback:\n{error_trace}")
+            
+            # Return a more informative error response
+            return Response({
+                'error': 'CSV export failed',
+                'message': str(e),
+                'type': type(e).__name__
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

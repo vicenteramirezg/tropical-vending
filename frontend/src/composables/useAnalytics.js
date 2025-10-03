@@ -140,9 +140,14 @@ export function useAnalytics() {
         return
       }
       
+      console.log('Fetching machines for location:', locationId)
       const response = await api.getMachines({ location: locationId })
+      console.log('Machines API response:', response.data)
+      
       // Handle paginated response - extract results array
       machines.value = response.data.results || response.data
+      
+      console.log('Machines set to:', machines.value)
     } catch (err) {
       console.error('Error fetching machines:', err)
       machines.value = []
@@ -159,10 +164,14 @@ export function useAnalytics() {
         return
       }
       
+      console.log('Fetching products for machine:', machineId)
       // Fetch machine items (products for specific machine)
       const response = await api.getMachineItems({ machine: machineId })
+      console.log('Machine items API response:', response.data)
+      
       // Handle paginated response - extract results array
       const machineItems = response.data.results || response.data
+      console.log('Machine items extracted:', machineItems)
       
       // Transform machine items to products list with unique products
       const uniqueProducts = new Map()
@@ -176,6 +185,7 @@ export function useAnalytics() {
       })
       
       products.value = Array.from(uniqueProducts.values())
+      console.log('Products set to:', products.value)
     } catch (err) {
       console.error('Error fetching products:', err)
       products.value = []

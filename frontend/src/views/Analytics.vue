@@ -89,8 +89,10 @@ const updateFilters = (updatedFilters) => {
 
 // Handle location change - fetch machines for selected location
 const handleLocationChange = async (locationId) => {
+  console.log('Location changed to:', locationId)
   if (locationId) {
     await fetchMachines(locationId)
+    console.log('Machines loaded:', machines.value.length)
   } else {
     machines.value = []
     products.value = []
@@ -99,8 +101,10 @@ const handleLocationChange = async (locationId) => {
 
 // Handle machine change - fetch products for selected machine
 const handleMachineChange = async (machineId) => {
+  console.log('Machine changed to:', machineId)
   if (machineId) {
     await fetchProducts(machineId)
+    console.log('Products loaded:', products.value.length)
   } else {
     products.value = []
   }

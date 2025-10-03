@@ -24,8 +24,14 @@
       <FilterControls
         :filters="filters"
         :locations="locations"
+        :machines="machines"
+        :products="products"
+        :loading-machines="loadingStates.machines"
+        :loading-products="loadingStates.products"
         @apply-filters="applyFilters"
         @update-filters="updateFilters"
+        @location-changed="handleLocationChange"
+        @machine-changed="handleMachineChange"
       />
       
       <!-- Revenue & Profit Section -->
@@ -59,21 +65,45 @@ const {
   loading,
   error,
   locations,
+  machines,
+  products,
   filters,
   revenueProfitData,
   stockLevelData,
   demandData,
+  loadingStates,
   formatDateShort,
   formatDailyDemand,
   formatTrend,
   getTrendClass,
   applyFilters,
-  initialize
+  initialize,
+  fetchMachines,
+  fetchProducts
 } = useAnalytics()
 
 // Handle filter updates from child components
 const updateFilters = (updatedFilters) => {
   Object.assign(filters.value, updatedFilters)
+}
+
+// Handle location change - fetch machines for selected location
+const handleLocationChange = async (locationId) => {
+  if (locationId) {
+    await fetchMachines(locationId)
+  } else {
+    machines.value = []
+    products.value = []
+  }
+}
+
+// Handle machine change - fetch products for selected machine
+const handleMachineChange = async (machineId) => {
+  if (machineId) {
+    await fetchProducts(machineId)
+  } else {
+    products.value = []
+  }
 }
 
 // Initialize data on component mount

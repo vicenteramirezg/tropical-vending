@@ -55,6 +55,38 @@
         </select>
       </div>
       
+      <div>
+        <label for="machine" class="block text-sm font-medium text-gray-700 mb-1">Machine</label>
+        <select
+          id="machine"
+          :value="filters.machine"
+          @change="updateMachine"
+          :disabled="!filters.location || loadingMachines"
+          class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+        >
+          <option value="">{{ loadingMachines ? 'Loading...' : 'All Machines' }}</option>
+          <option v-for="machine in machines" :key="machine.id" :value="machine.id">
+            {{ machine.name }} - {{ machine.machine_type }}
+          </option>
+        </select>
+      </div>
+      
+      <div>
+        <label for="product" class="block text-sm font-medium text-gray-700 mb-1">Product</label>
+        <select
+          id="product"
+          :value="filters.product"
+          @change="updateProduct"
+          :disabled="!filters.machine || loadingProducts"
+          class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+        >
+          <option value="">{{ loadingProducts ? 'Loading...' : 'All Products' }}</option>
+          <option v-for="product in products" :key="product.id" :value="product.id">
+            {{ product.name }}
+          </option>
+        </select>
+      </div>
+      
       <div class="self-end ml-auto mt-4">
         <button
           type="button"
@@ -80,10 +112,26 @@ defineProps({
   locations: {
     type: Array,
     required: true
+  },
+  machines: {
+    type: Array,
+    default: () => []
+  },
+  products: {
+    type: Array,
+    default: () => []
+  },
+  loadingMachines: {
+    type: Boolean,
+    default: false
+  },
+  loadingProducts: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['apply-filters', 'update-filters'])
+const emit = defineEmits(['apply-filters', 'update-filters', 'location-changed', 'machine-changed'])
 
 const updateDateRange = (event) => {
   emit('update-filters', { dateRange: event.target.value })
@@ -98,6 +146,18 @@ const updateEndDate = (event) => {
 }
 
 const updateLocation = (event) => {
-  emit('update-filters', { location: event.target.value })
+  const locationId = event.target.value
+  emit('update-filters', { location: locationId, machine: '', product: '' })
+  emit('location-changed', locationId)
+}
+
+const updateMachine = (event) => {
+  const machineId = event.target.value
+  emit('update-filters', { machine: machineId, product: '' })
+  emit('machine-changed', machineId)
+}
+
+const updateProduct = (event) => {
+  emit('update-filters', { product: event.target.value })
 }
 </script> 

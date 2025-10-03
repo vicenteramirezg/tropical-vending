@@ -7,10 +7,14 @@ export function useAnalytics() {
   const loading = ref(true)
   const error = ref(null)
   const locations = ref([])
+  const machines = ref([])
+  const products = ref([])
 
   // Individual loading states for better UX
   const loadingStates = ref({
     locations: false,
+    machines: false,
+    products: false,
     revenue: false,
     stock: false,
     demand: false
@@ -21,7 +25,9 @@ export function useAnalytics() {
     dateRange: '30',
     startDate: '',
     endDate: '',
-    location: ''
+    location: '',
+    machine: '',
+    product: ''
   })
 
   // Data states
@@ -98,6 +104,14 @@ export function useAnalytics() {
       params.location = filters.value.location
     }
     
+    if (filters.value.machine) {
+      params.machine = filters.value.machine
+    }
+    
+    if (filters.value.product) {
+      params.product = filters.value.product
+    }
+    
     return params
   }
 
@@ -115,6 +129,58 @@ export function useAnalytics() {
       // Don't set global error for locations as it's not critical
     } finally {
       loadingStates.value.locations = false
+    }
+  }
+
+  const fetchMachines = async (locationId) => {
+    loadingStates.value.machines = true
+    try {
+      if (!locationId) {
+        machines.value = []
+        return
+      }
+      
+      const response = await api.getMachines({ location: locationId })
+      // Handle paginated response - extract results array
+      machines.value = response.data.results || response.data
+    } catch (err) {
+      console.error('Error fetching machines:', err)
+      machines.value = []
+    } finally {
+      loadingStates.value.machines = false
+    }
+  }
+
+  const fetchProducts = async (machineId) => {
+    loadingStates.value.products = true
+    try {
+      if (!machineId) {
+        products.value = []
+        return
+      }
+      
+      // Fetch machine items (products for specific machine)
+      const response = await api.getMachineItems({ machine: machineId })
+      // Handle paginated response - extract results array
+      const machineItems = response.data.results || response.data
+      
+      // Transform machine items to products list with unique products
+      const uniqueProducts = new Map()
+      machineItems.forEach(item => {
+        if (!uniqueProducts.has(item.product)) {
+          uniqueProducts.set(item.product, {
+            id: item.product,
+            name: item.product_name
+          })
+        }
+      })
+      
+      products.value = Array.from(uniqueProducts.values())
+    } catch (err) {
+      console.error('Error fetching products:', err)
+      products.value = []
+    } finally {
+      loadingStates.value.products = false
     }
   }
 
@@ -335,6 +401,8 @@ export function useAnalytics() {
     loading,
     error,
     locations,
+    machines,
+    products,
     filters,
     revenueProfitData,
     stockLevelData,
@@ -355,6 +423,8 @@ export function useAnalytics() {
     // Actions
     applyFilters,
     initialize,
-    refreshSection
+    refreshSection,
+    fetchMachines,
+    fetchProducts
   }
 } 

@@ -1313,6 +1313,7 @@ class AdvancedDemandAnalyticsView(OptimizedAnalyticsViewMixin, APIView):
         products_performance = {}
         machines_performance = {}
         locations_performance = {}
+        product_machine_performance = {}  # NEW: Track Product × Machine × Location granularity
         time_series_data = []
         
         total_demand = 0
@@ -1425,6 +1426,37 @@ class AdvancedDemandAnalyticsView(OptimizedAnalyticsViewMixin, APIView):
             location_data['machine_count'].add(row['machine_id'])
             location_data['product_count'].add(row['product_id'])
             
+            # Product × Machine × Location performance aggregation (for detailed CSV export)
+            product_machine_key = (row['product_id'], row['machine_id'], row['location_id'])
+            if product_machine_key not in product_machine_performance:
+                product_machine_performance[product_machine_key] = {
+                    'product_id': row['product_id'],
+                    'product_name': row['product_name'],
+                    'machine_id': row['machine_id'],
+                    'machine_name': row['machine_name'],
+                    'machine_type': row['machine_type'],
+                    'machine_model': row['machine_model'],
+                    'location_id': row['location_id'],
+                    'location_name': row['location_name'],
+                    'total_demand': 0,
+                    'total_revenue': 0,
+                    'total_profit': 0,
+                    'profit_margin': 0,
+                    'restock_count': 0,
+                    'avg_daily_demand': 0,
+                    'demand_periods': []
+                }
+            
+            product_machine_data = product_machine_performance[product_machine_key]
+            product_machine_data['total_demand'] += demand_units
+            product_machine_data['total_revenue'] += revenue
+            product_machine_data['total_profit'] += profit
+            product_machine_data['restock_count'] += 1
+            product_machine_data['demand_periods'].append({
+                'daily_demand': daily_demand,
+                'days_between': days_between
+            })
+            
             # Time series data for trend analysis
             time_series_data.append({
                 'date': row['visit_date'],
@@ -1441,6 +1473,7 @@ class AdvancedDemandAnalyticsView(OptimizedAnalyticsViewMixin, APIView):
         self._finalize_product_analytics(products_performance)
         self._finalize_machine_analytics(machines_performance)
         self._finalize_location_analytics(locations_performance)
+        self._finalize_product_machine_analytics(product_machine_performance)
         
         # Calculate overall KPIs
         analysis_days = (end_date - start_date).days
@@ -1451,6 +1484,7 @@ class AdvancedDemandAnalyticsView(OptimizedAnalyticsViewMixin, APIView):
         top_products = sorted(products_performance.values(), key=lambda x: x['total_demand'], reverse=True)
         top_machines = sorted(machines_performance.values(), key=lambda x: x['total_demand'], reverse=True)
         top_locations = sorted(locations_performance.values(), key=lambda x: x['total_demand'], reverse=True)
+        product_machine_breakdown = sorted(product_machine_performance.values(), key=lambda x: (x['product_name'], x['location_name'], x['machine_name']))
         
         return {
             'summary': {
@@ -1480,6 +1514,7 @@ class AdvancedDemandAnalyticsView(OptimizedAnalyticsViewMixin, APIView):
             'locations': {
                 'performance': top_locations
             },
+            'product_machine_breakdown': product_machine_breakdown,  # NEW: Detailed product × machine × location data
             'trends': {
                 'time_series': sorted(time_series_data, key=lambda x: x['date']),
                 'daily_summary': self._generate_daily_summary(time_series_data)
@@ -1547,6 +1582,21 @@ class AdvancedDemandAnalyticsView(OptimizedAnalyticsViewMixin, APIView):
             if location_data['machine_count'] > 0:
                 location_data['avg_revenue_per_machine'] = location_data['total_revenue'] / location_data['machine_count']
                 location_data['avg_demand_per_machine'] = location_data['total_demand'] / location_data['machine_count']
+    
+    def _finalize_product_machine_analytics(self, product_machine_performance):
+        """Calculate final metrics for product × machine × location combinations"""
+        for combo_data in product_machine_performance.values():
+            # Calculate profit margin
+            if combo_data['total_revenue'] > 0:
+                combo_data['profit_margin'] = (combo_data['total_profit'] / combo_data['total_revenue']) * 100
+            
+            # Calculate average daily demand
+            total_days = sum(period['days_between'] for period in combo_data['demand_periods'] if period['days_between'] > 0)
+            if total_days > 0:
+                combo_data['avg_daily_demand'] = combo_data['total_demand'] / (total_days / len(combo_data['demand_periods']))
+            
+            # Clean up temporary data
+            del combo_data['demand_periods']
     
     def _generate_daily_summary(self, time_series_data):
         """Generate daily aggregated summary from time series data"""
@@ -1619,9 +1669,9 @@ class AdvancedDemandAnalyticsView(OptimizedAnalyticsViewMixin, APIView):
         
         writer = csv.writer(response)
         
-        # Write products data with safe field access
+        # Write products data with safe field access (AGGREGATED SUMMARY)
         if data.get('products', {}).get('all'):
-            writer.writerow(['=== PRODUCTS PERFORMANCE ==='])
+            writer.writerow(['=== PRODUCTS PERFORMANCE SUMMARY (AGGREGATED) ==='])
             writer.writerow(['Product Name', 'Total Demand', 'Total Revenue', 'Total Profit', 'Profit Margin %', 'Machines Count', 'Locations Count', 'Velocity Score', 'Trend'])
             
             for product in data['products']['all']:
@@ -1643,6 +1693,35 @@ class AdvancedDemandAnalyticsView(OptimizedAnalyticsViewMixin, APIView):
                     writer.writerow([
                         product.get('product_name', 'ERROR'),
                         'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR'
+                    ])
+            
+            writer.writerow([])  # Empty row
+        
+        # Write detailed product × machine × location breakdown (NEW SECTION)
+        if data.get('product_machine_breakdown'):
+            writer.writerow(['=== PRODUCTS PERFORMANCE BY MACHINE (DETAILED) ==='])
+            writer.writerow(['Product Name', 'Machine Name', 'Location', 'Total Demand', 'Total Revenue', 'Total Profit', 'Profit Margin %', 'Avg Daily Demand', 'Restock Count'])
+            
+            for combo in data['product_machine_breakdown']:
+                try:
+                    writer.writerow([
+                        combo.get('product_name', 'N/A'),
+                        combo.get('machine_name', 'N/A'),
+                        combo.get('location_name', 'N/A'),
+                        combo.get('total_demand', 0),
+                        round(combo.get('total_revenue', 0), 2),
+                        round(combo.get('total_profit', 0), 2),
+                        round(combo.get('profit_margin', 0), 2),
+                        round(combo.get('avg_daily_demand', 0), 2),
+                        combo.get('restock_count', 0)
+                    ])
+                except Exception as e:
+                    print(f"Error writing product-machine combo row: {e}, Combo data: {combo}")
+                    # Write a placeholder row to indicate error
+                    writer.writerow([
+                        combo.get('product_name', 'ERROR'),
+                        combo.get('machine_name', 'ERROR'),
+                        'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR'
                     ])
             
             writer.writerow([])  # Empty row

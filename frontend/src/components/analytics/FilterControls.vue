@@ -145,20 +145,22 @@ const updateEndDate = (event) => {
   emit('update-filters', { endDate: event.target.value })
 }
 
-const updateLocation = async (event) => {
+const updateLocation = (event) => {
   const locationId = event.target.value
+  console.log('FilterControls: Location changed to:', locationId)
   // First update filters to clear machine and product
   emit('update-filters', { location: locationId, machine: '', product: '' })
   // Then trigger fetching machines for this location
-  await emit('location-changed', locationId)
+  emit('location-changed', locationId)
 }
 
-const updateMachine = async (event) => {
+const updateMachine = (event) => {
   const machineId = event.target.value
+  console.log('FilterControls: Machine changed to:', machineId)
   // First update filters to clear product
   emit('update-filters', { machine: machineId, product: '' })
   // Then trigger fetching products for this machine
-  await emit('machine-changed', machineId)
+  emit('machine-changed', machineId)
 }
 
 const updateProduct = (event) => {
